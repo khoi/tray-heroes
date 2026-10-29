@@ -104,7 +104,7 @@ export function App() {
         {tab === "pets" && <PetsPanel />}
       </main>
       <footer className="footer muted">
-        Art: Kenney (Tiny Dungeon, Tiny Town) and Clint Bellanger (Tiny Creatures), CC0.
+        Art and sound: 0x72, pixel-boy &amp; AAA (Ninja Adventure), Kenney and Clint Bellanger. All CC0.
         <button
           type="button"
           className="link"

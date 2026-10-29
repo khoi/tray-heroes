@@ -186,16 +186,26 @@ button.link {
   color: var(--muted);
 }
 
+.strip-wrap {
+  position: relative;
+}
+
 .strip-actions {
   position: absolute;
-  right: 8px;
-  bottom: 6px;
+  right: 0;
+  top: calc(100% + 12px);
+  display: flex;
+  gap: 6px;
+  z-index: 1;
 }
 
 .strip-actions button {
   font-size: 12px;
-  padding: 2px 8px;
-  background: rgb(23 19 29 / 0.8);
+  padding: 3px 10px;
+}
+
+.strip-actions button[aria-pressed="false"] {
+  color: var(--muted);
 }
 
 .tabs {
@@ -824,5 +834,24 @@ button.link {
   * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+.portrait {
+  display: inline-block;
+  flex: none;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  animation-name: portrait-idle;
+  animation-timing-function: steps(var(--frames));
+  animation-iteration-count: infinite;
+}
+
+@keyframes portrait-idle {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: var(--end);
   }
 }

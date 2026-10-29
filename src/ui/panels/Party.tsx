@@ -5,7 +5,8 @@ import { dps, heroStats, modifiers, partySize } from "../../game/stats";
 import { xpToNext } from "../../game/tuning";
 import { engine, useGame } from "../engine";
 import { compact, percent } from "../format";
-import { EmptyTile, Icon, ItemTile } from "../items";
+import { EmptyTile, ItemTile } from "../items";
+import { Portrait } from "../Portrait";
 
 const SLOT_LABEL: Record<Slot, string> = { weapon: "Weapon", helmet: "Helm", armor: "Chest", boots: "Boots", ring: "Ring", amulet: "Amulet" };
 
@@ -42,7 +43,7 @@ export function PartyPanel({ selected, onSelect }: { selected: ClassKey; onSelec
               onClick={() => onSelect(cls)}
             >
               <header>
-                <Icon sprite={def.sprite} scale={3} />
+                <Portrait unit={cls} fallback={def.sprite} />
                 <div>
                   <h3>
                     {def.name} <span className="muted">Lv {hero.level}</span>
