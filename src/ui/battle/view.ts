@@ -7,7 +7,7 @@ import { heroStats, modifiers, type HeroStats } from "../../game/stats";
 import type { GameEvent, GameState, MonsterUnit } from "../../game/types";
 import { compact } from "../format";
 import { audio } from "./audio";
-import { Backdrop, GROUND_Y, WORLD_H } from "./backdrop";
+import { Backdrop, GROUND_Y, WORLD_H, skyTop } from "./backdrop";
 import { Effects } from "./fx";
 import { TextureBank } from "./textures";
 import { UnitView } from "./units";
@@ -18,6 +18,7 @@ const FEET_Y = GROUND_Y + 3;
 const WALK_SPEED = 30;
 const HERO_GAP = 17;
 const MONSTER_GAP = 16;
+const MIN_WORLD_W = 240;
 const RANGED_MONSTERS = new Set<MonsterKey>(["scorpion", "reaper"]);
 
 interface Floater {
@@ -82,7 +83,7 @@ export class BattleView {
     await this.app.init({
       width: this.screenW,
       height: this.screenH,
-      backgroundAlpha: 0,
+      background: skyTop("forest"),
       antialias: false,
       autoStart: false,
       autoDensity: true,
@@ -110,7 +111,7 @@ export class BattleView {
     if (w === this.screenW && h === this.screenH) return;
     this.screenW = w;
     this.screenH = h;
-    this.scale = Math.max(1, Math.floor(h / WORLD_H));
+    this.scale = Math.max(1, Math.min(Math.floor(h / WORLD_H), Math.floor(w / MIN_WORLD_W)));
     this.worldW = Math.ceil(w / this.scale);
     this.app.renderer.resize(w, h);
     this.world.scale.set(this.scale);
@@ -129,6 +130,7 @@ export class BattleView {
 
     const battle = state.battle;
     const theme = ACTS[stageInfo(battle.stage).act]!.theme;
+    if (this.backdrop.theme !== theme) this.app.renderer.background.color = skyTop(theme);
     this.backdrop.setTheme(theme);
     this.fx.setTheme(theme, this.worldW);
     audio.setTheme(theme);

@@ -73,6 +73,8 @@ const THEMES: Record<Theme, ThemeDef> = {
   },
 };
 
+export const skyTop = (theme: Theme): string => THEMES[theme].sky[0]!;
+
 const BAYER = [
   [0, 8, 2, 10],
   [12, 4, 14, 6],
