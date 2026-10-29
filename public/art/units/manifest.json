@@ -1,0 +1,528 @@
+{
+ "units": {
+  "knight": {
+   "src": "/art/units/knight.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 8,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_knight_sword.png",
+    "w": 10,
+    "h": 29,
+    "kind": "blade"
+   }
+  },
+  "ranger": {
+   "src": "/art/units/ranger.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 9,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_bow.png",
+    "w": 14,
+    "h": 26,
+    "kind": "bow"
+   }
+  },
+  "mage": {
+   "src": "/art/units/mage.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 9,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_red_magic_staff.png",
+    "w": 8,
+    "h": 30,
+    "kind": "staff"
+   }
+  },
+  "goblin": {
+   "src": "/art/units/goblin.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 6,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_knife.png",
+    "w": 6,
+    "h": 13,
+    "kind": "blade"
+   }
+  },
+  "mushroom": {
+   "src": "/art/units/mushroom.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 3,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "snake": {
+   "src": "/art/units/snake.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 3,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "wolf": {
+   "src": "/art/units/wolf.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 7,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_baton_with_spikes.png",
+    "w": 10,
+    "h": 22,
+    "kind": "blade"
+   }
+  },
+  "orc": {
+   "src": "/art/units/orc.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 7,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_waraxe.png",
+    "w": 12,
+    "h": 23,
+    "kind": "blade"
+   }
+  },
+  "troll": {
+   "src": "/art/units/troll.png",
+   "w": 32,
+   "h": 36,
+   "anchorX": 16,
+   "anchorY": 35,
+   "top": 10,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_big_hammer.png",
+    "w": 10,
+    "h": 37,
+    "kind": "blade"
+   }
+  },
+  "skeleton": {
+   "src": "/art/units/skeleton.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 2,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_rusty_sword.png",
+    "w": 10,
+    "h": 21,
+    "kind": "blade"
+   }
+  },
+  "zombie": {
+   "src": "/art/units/zombie.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 1,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "scorpion": {
+   "src": "/art/units/scorpion.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 3,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "cobra": {
+   "src": "/art/units/cobra.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 6,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "mummy": {
+   "src": "/art/units/mummy.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 6,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "reaper": {
+   "src": "/art/units/reaper.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 8,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_green_magic_staff.png",
+    "w": 8,
+    "h": 30,
+    "kind": "staff"
+   }
+  },
+  "vampire": {
+   "src": "/art/units/vampire.png",
+   "w": 32,
+   "h": 36,
+   "anchorX": 16,
+   "anchorY": 35,
+   "top": 9,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "yeti": {
+   "src": "/art/units/yeti.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 0,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "frost": {
+   "src": "/art/units/frost.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 4,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "flame": {
+   "src": "/art/units/flame.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 5,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_cleaver.png",
+    "w": 9,
+    "h": 19,
+    "kind": "blade"
+   }
+  },
+  "imp": {
+   "src": "/art/units/imp.png",
+   "w": 16,
+   "h": 16,
+   "anchorX": 8,
+   "anchorY": 15,
+   "top": 4,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "skull": {
+   "src": "/art/units/skull.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 7,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  },
+  "demon": {
+   "src": "/art/units/demon.png",
+   "w": 16,
+   "h": 23,
+   "anchorX": 8,
+   "anchorY": 22,
+   "top": 8,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_red_magic_staff.png",
+    "w": 8,
+    "h": 30,
+    "kind": "staff"
+   }
+  },
+  "dragon": {
+   "src": "/art/units/dragon.png",
+   "w": 32,
+   "h": 36,
+   "anchorX": 16,
+   "anchorY": 35,
+   "top": 6,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": null,
+   "death": null,
+   "weapon": null
+  }
+ }
+}
