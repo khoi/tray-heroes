@@ -4,6 +4,7 @@ import { step } from "./combat";
 import { STAGE_COUNT } from "./data/world";
 import { advance, applyOffline, newGame } from "./game";
 import { alchemyValue, createItem, openChest } from "./loot";
+import { SANDBOX_GOLD, sandboxGame } from "./sandbox";
 import { parseSave, serialize } from "./save";
 import type { ItemId } from "./schema";
 import { STEP_MS } from "./tuning";
@@ -211,5 +212,16 @@ describe("saves", () => {
     const state = newGame(1, 0);
     state.inventory.push(999 as ItemId);
     expect(parseSave(serialize(state, 0)).ok).toBe(false);
+  });
+});
+
+describe("sandbox start", () => {
+  it("starts with every hero in the party, a fortune in gold and chests to open", () => {
+    const state = sandboxGame(1, 0);
+    expect(state.party).toEqual(["knight", "ranger", "mage"]);
+    expect(state.battle.heroes.map((h) => h.cls)).toEqual(["knight", "ranger", "mage"]);
+    expect(state.gold).toBe(SANDBOX_GOLD);
+    expect(state.chests.length).toBeGreaterThan(10);
+    expect(parseSave(serialize(state, 0)).ok).toBe(true);
   });
 });

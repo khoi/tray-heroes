@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { advance, newGame, type Clock, type OfflineReport } from "../game/game";
+import { sandboxGame } from "../game/sandbox";
 import { parseSave, serialize } from "../game/save";
 import type { GameEvent, GameState, Result } from "../game/types";
 
@@ -11,6 +12,12 @@ const EVENT_BUFFER = 300;
 export type Notice = { id: number; text: string; tone: "info" | "good" | "bad" };
 
 function load(now: number): GameState {
+  const url = new URL(location.href);
+  if (import.meta.env.DEV && url.searchParams.has("sandbox")) {
+    url.searchParams.delete("sandbox");
+    history.replaceState(null, "", url);
+    return sandboxGame(Math.floor(Math.random() * 2 ** 31), now);
+  }
   const raw = localStorage.getItem(SAVE_KEY);
   if (raw) {
     const parsed = parseSave(raw);
