@@ -1,0 +1,88 @@
+/* Stats */
+
+.stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats dt {
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* Heroes */
+
+.heroes {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 16px;
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 6px 10px;
+}
+
+.roster-row.selected {
+  border-color: var(--gold);
+}
+
+.roster-row.locked {
+  opacity: 0.6;
+}
+
+.roster-name {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  font-size: 14px;
+}
+
+.roster-name .muted {
+  font-size: 12px;
+}
+
+.hero-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.hero-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.heroes .equipment {
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  gap: 6px;
+}
+
+.stat-row {
+  display: contents;
+}

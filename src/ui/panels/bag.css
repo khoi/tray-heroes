@@ -1,0 +1,43 @@
+/* Bag */
+
+.bag {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+}
+
+.chests {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.chest-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bag-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.bag-side {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  align-self: start;
+}
+
+.materials section {
+  margin-bottom: 14px;
+}
+
+.materials h4 {
+  margin-bottom: 6px;
+}

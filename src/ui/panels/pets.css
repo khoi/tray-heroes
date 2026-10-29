@@ -1,0 +1,20 @@
+/* Pets */
+
+.pet {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  background: var(--panel-2);
+}
+
+.pet > div {
+  flex: 1;
+}
+
+.pet.done {
+  border-color: #4c7a3e;
+}

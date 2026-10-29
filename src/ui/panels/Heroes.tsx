@@ -9,6 +9,7 @@ import { engine, useGame } from "../engine";
 import { compact, percent } from "../format";
 import { EmptyTile, ItemTile } from "../items";
 import { Portrait } from "../Portrait";
+import "./heroes.css";
 
 export function HeroesPanel({ selected, onSelect }: { selected: ClassKey; onSelect: (cls: ClassKey) => void }) {
   const state = useGame();

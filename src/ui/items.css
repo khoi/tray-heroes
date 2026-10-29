@@ -1,0 +1,179 @@
+/* Items */
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 44px);
+  gap: 6px;
+}
+
+.item-tile {
+  --grade: var(--border);
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--grade);
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--grade) 28%, transparent), #1a1520 72%);
+}
+
+.item-tile:hover:not(:disabled) {
+  border-color: var(--grade);
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--grade) 45%, transparent), #1a1520 72%);
+}
+
+.item-tile.selected {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.item-tile.empty {
+  border-style: dashed;
+  background: #1a1520;
+}
+
+.empty-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.item-level {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font-size: 10px;
+  color: #fff;
+  text-shadow:
+    1px 1px 0 #000,
+    -1px -1px 0 #000;
+}
+
+.item-lock {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  font-size: 10px;
+  color: var(--gold);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.item-name {
+  color: var(--grade);
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.stat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-list .affix {
+  color: #9ec8ff;
+}
+
+.delta {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.delta.up {
+  color: var(--good);
+}
+
+.delta.down {
+  color: var(--bad);
+}
+
+.delta.same {
+  color: var(--muted);
+}
+
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-grid.small {
+  grid-template-columns: repeat(auto-fill, 44px);
+  max-height: 260px;
+  overflow: auto;
+}
+
+.item-tile.unique {
+  box-shadow: 0 0 0 1px #000, 0 0 8px var(--grade);
+}
+
+.item-gems {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 8px;
+  color: #9ee8ff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.unique-line {
+  color: #ffd23f;
+}
+
+.socket-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.socket-list li.filled {
+  color: #9ee8ff;
+}
+
+.socket-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+
+.socket-list li.filled .socket-dot {
+  background: currentColor;
+}
+
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 3px 8px;
+}
+
+.material-chip:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

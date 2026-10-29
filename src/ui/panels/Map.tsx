@@ -18,6 +18,7 @@ import {
 import { engine, useGame } from "../engine";
 import { percent } from "../format";
 import { Icon } from "../items";
+import "./map.css";
 
 function Plaguelands() {
   const state = useGame();

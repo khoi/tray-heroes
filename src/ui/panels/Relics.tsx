@@ -7,6 +7,7 @@ import type { Relic, RelicId } from "../../game/schema";
 import { engine, useGame } from "../engine";
 import { compact } from "../format";
 import { statText } from "../items";
+import "./relics.css";
 
 const COLOR: Record<RelicColor, string> = { red: "#ff6b6b", green: "#6fd36a", blue: "#62c3ff" };
 

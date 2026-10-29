@@ -7,6 +7,7 @@ import { modifiers, skillSlots } from "../../game/stats";
 import { engine, useGame } from "../engine";
 import { percent } from "../format";
 import { statText } from "../items";
+import "./skills.css";
 
 function effectText(effect: Effect, level: number): string {
   const at = (base: number, per: number) => base + per * (Math.max(1, level) - 1);

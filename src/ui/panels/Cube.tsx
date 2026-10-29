@@ -31,6 +31,7 @@ import { CUBE_FEATURES, CUBE_MAX_LEVEL, CUBE_UNLOCK_HERO_LEVEL, cubeXpToNext, ty
 import { engine, useGame } from "../engine";
 import { compact, percent } from "../format";
 import { EmptyTile, ItemDetails, ItemTile, MaterialChip } from "../items";
+import "./cube.css";
 
 type Mode = "synthesis" | "alchemy" | "craft" | "sockets" | "offering" | "corrosion";
 const MODE_LABEL: Record<Mode, string> = { synthesis: "Synthesis", alchemy: "Alchemy", craft: "Craft", sockets: "Sockets", offering: "Offering", corrosion: "Corrosion" };

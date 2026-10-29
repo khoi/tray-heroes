@@ -4,6 +4,7 @@ import { BRANCHES, RUNES, RUNE_KEYS, runePosition, type Branch, type ModKey, typ
 import { STATS, type StatKey } from "../../game/data/stats";
 import { engine, useGame } from "../engine";
 import { compact, percent } from "../format";
+import "./runes.css";
 
 const UNIT = 62;
 const RADIUS = 22;

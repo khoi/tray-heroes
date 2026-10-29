@@ -10,6 +10,7 @@ import { heroStats, itemMain, modifiers, power } from "../game/stats";
 import type { SpriteRef } from "../game/types";
 import { compact, percent } from "./format";
 import { spriteStyle } from "./sprites";
+import "./items.css";
 
 export function Icon({ sprite, scale = 2, className }: { sprite: SpriteRef; scale?: number; className?: string }) {
   return <span className={`icon ${className ?? ""}`} style={spriteStyle(sprite, scale)} aria-hidden />;

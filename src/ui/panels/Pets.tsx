@@ -4,6 +4,7 @@ import { describe } from "./Runes";
 import { useGame } from "../engine";
 import { compact } from "../format";
 import { Icon } from "../items";
+import "./pets.css";
 
 export function PetsPanel() {
   const state = useGame();

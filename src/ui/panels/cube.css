@@ -1,0 +1,100 @@
+/* Cube */
+
+.cube-mode {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grade-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cube-body {
+  display: grid;
+  grid-template-columns: auto 1fr 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+.cube-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  gap: 6px;
+  padding: 10px;
+  background: #1a1520;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  width: max-content;
+}
+
+.odds {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cube-result {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  animation: pop 260ms ease-out;
+}
+
+.outcome {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.outcome.jackpot {
+  color: var(--gold);
+}
+
+.outcome.upgrade {
+  color: var(--good);
+}
+
+.outcome.stay {
+  color: var(--muted);
+}
+
+/* Cube */
+
+.cube-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cube-level .bar {
+  margin-top: 0;
+  max-width: 260px;
+}
+
+.craft-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.socket-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.socket-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  text-transform: capitalize;
+}

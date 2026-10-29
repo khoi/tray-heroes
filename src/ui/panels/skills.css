@@ -1,0 +1,96 @@
+/* Skills */
+
+.skills-body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+}
+
+.skill-summary {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tier {
+  display: grid;
+  grid-template-columns: 34px repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: stretch;
+}
+
+.tier.closed {
+  opacity: 0.4;
+}
+
+.tier-label {
+  color: var(--muted);
+  font-size: 12px;
+  align-self: center;
+  text-align: right;
+}
+
+.skill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 12px;
+  padding: 6px 8px;
+  min-height: 46px;
+}
+
+.skill.active {
+  border-color: #6a5326;
+}
+
+.skill.learned {
+  background: #2f2739;
+}
+
+.skill.active.learned {
+  border-color: var(--gold);
+}
+
+.skill.passive.learned {
+  border-color: #62c3ff;
+}
+
+.skill.focus {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.skill-name {
+  font-weight: 600;
+  text-align: left;
+}
+
+.skill-level {
+  color: var(--muted);
+}
+
+.slot-badge {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  background: var(--gold);
+  color: #2a1d05;
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 0 5px;
+}
+
+.skill-side {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

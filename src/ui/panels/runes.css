@@ -1,0 +1,109 @@
+/* Runes */
+
+.runes {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.rune-tree {
+  max-width: 100%;
+  height: auto;
+}
+
+.edge {
+  stroke: var(--border);
+  stroke-width: 3;
+}
+
+.edge.on {
+  stroke: #8a6d2b;
+}
+
+.rune {
+  cursor: pointer;
+}
+
+.rune circle {
+  fill: var(--panel-2);
+  stroke: var(--border);
+  stroke-width: 3;
+  transition: stroke 120ms ease-out;
+}
+
+.rune text {
+  fill: var(--text);
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 10px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.rune text.small {
+  fill: var(--muted);
+  font-size: 10px;
+}
+
+.rune.owned circle {
+  stroke: #8a6d2b;
+}
+
+.rune.ready circle {
+  stroke: var(--gold);
+}
+
+.rune.maxed circle {
+  fill: #3a3020;
+  stroke: var(--gold);
+}
+
+.rune.locked {
+  opacity: 0.45;
+}
+
+.rune.focus circle {
+  stroke: #fff;
+}
+
+.rune-side {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Runes */
+
+.rune-scroll {
+  overflow: auto;
+  max-height: 640px;
+}
+
+.rune-core {
+  fill: var(--gold);
+}
+
+.branch-label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.rune.ready circle,
+.rune.owned circle {
+  stroke: var(--branch);
+}
+
+.rune.maxed circle {
+  fill: color-mix(in srgb, var(--branch) 25%, #1a1520);
+  stroke: var(--branch);
+}
+
+.rune-side button {
+  margin-top: 4px;
+}

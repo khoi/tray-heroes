@@ -10,6 +10,7 @@ import { engine, useGame } from "../engine";
 import { compact } from "../format";
 import { Delta, EmptyTile, Icon, ItemDetails, ItemTile, MaterialChip, compareEquip, eligibleHeroes } from "../items";
 import { Portrait } from "../Portrait";
+import "./bag.css";
 
 const CHEST_SPRITE: Record<ChestKind, number> = { common: 89, boss: 90, act: 91 };
 const CHEST_LABEL: Record<ChestKind, string> = { common: "Chest", boss: "Boss chest", act: "Act chest" };
