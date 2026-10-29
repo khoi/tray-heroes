@@ -1,4 +1,5 @@
 import { newBattle } from "./combat";
+import { migrateV1 } from "./migrate";
 import { Save } from "./schema";
 import { fail, ok, type GameState, type Result } from "./types";
 
@@ -14,10 +15,11 @@ export function parseSave(raw: string): Result<GameState> {
   } catch {
     return fail("Save is not valid JSON");
   }
-  const parsed = Save.safeParse(json);
+  const migrated = (json as { version?: unknown } | null)?.version === 1 ? migrateV1(json) : json;
+  const parsed = Save.safeParse(migrated);
   if (!parsed.success) return fail(`Save does not match the schema: ${parsed.error.issues[0]?.message ?? "unknown"}`);
   const save = parsed.data;
-  const placed = [...save.inventory, ...Object.values(save.heroes).flatMap((h) => Object.values(h.equipment))];
+  const placed = [...save.inventory, ...save.stash, ...Object.values(save.heroes).flatMap((h) => Object.values(h.equipment))];
   if (placed.some((id) => !save.items[id])) return fail("Save references a missing item");
-  return ok({ ...save, battle: newBattle(save, save.stage, 100) });
+  return ok({ ...save, battle: newBattle(save, save.location, 100) });
 }
