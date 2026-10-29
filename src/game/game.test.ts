@@ -170,6 +170,17 @@ describe("offline progress", () => {
     expect(state.gold).toBe(10 * 2 * 3_600);
   });
 
+  it("records the XP rate heroes actually earn, including the over-level penalty", () => {
+    const state = newGame(1, 0);
+    state.heroes.knight.level = 60;
+    run(state, 5 * 60_000);
+    const before = state.heroes.knight.xp;
+    run(state, 3 * 60_000);
+    const earnedPerSecond = (state.heroes.knight.xp - before) / 180;
+    expect(state.rates.xp).toBeGreaterThan(earnedPerSecond * 0.5);
+    expect(state.rates.xp).toBeLessThan(earnedPerSecond * 1.5);
+  });
+
   it("steps the simulation for short gaps and switches to offline rewards for long ones", () => {
     const state = newGame(1, 0);
     state.runes.repose = 1;

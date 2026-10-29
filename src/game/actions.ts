@@ -50,6 +50,11 @@ export function unequip(state: GameState, cls: ClassKey, slot: Slot): Result {
   return ok(undefined);
 }
 
+export function sortInventory(state: GameState): Result {
+  state.inventory.sort((a, b) => state.items[b]!.grade - state.items[a]!.grade || state.items[b]!.level - state.items[a]!.level);
+  return ok(undefined);
+}
+
 export function toggleLock(state: GameState, id: ItemId): Result {
   const item = state.items[id];
   if (!item) return fail("Unknown item");

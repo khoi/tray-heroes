@@ -51,7 +51,7 @@ export interface GameState extends Save {
 }
 
 export type GameEvent =
-  | { type: "attack"; from: number; to: number; amount: number; crit: boolean; skill: boolean }
+  | { type: "attack"; from: number; to: number; amount: number; crit: boolean; skill: boolean; splash: boolean }
   | { type: "hurt"; from: number; to: number; amount: number }
   | { type: "kill"; id: number; gold: number }
   | { type: "heroDown"; id: number }

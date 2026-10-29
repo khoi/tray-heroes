@@ -126,10 +126,11 @@ function onKill(state: GameState, monster: MonsterUnit, mods: Modifiers, events:
   const xp = KILL_BASE.xp * Math.pow(XP_GROWTH, monster.level - 1) * mult.xp * (1 + mods.xp);
   state.gold += gold;
   state.rates.windowGold += gold;
-  state.rates.windowXp += xp;
-  for (const unit of state.battle.heroes) {
-    if (unit.reviveIn > 0) continue;
-    grantXp(state, unit.cls, xp * levelPenalty(state.heroes[unit.cls].level, monster.level), events);
+  const alive = state.battle.heroes.filter((unit) => unit.reviveIn <= 0);
+  for (const unit of alive) {
+    const granted = xp * levelPenalty(state.heroes[unit.cls].level, monster.level);
+    state.rates.windowXp += granted / alive.length;
+    grantXp(state, unit.cls, granted, events);
   }
   state.kills[monster.kind] = (state.kills[monster.kind] ?? 0) + 1;
   events.push({ type: "kill", id: monster.id, gold });
@@ -150,7 +151,7 @@ function heroAttack(state: GameState, unit: HeroUnit, stats: HeroStats, events: 
     if (share <= 0) return;
     const amount = base * share;
     m.hp -= amount;
-    events.push({ type: "attack", from: unit.id, to: m.id, amount, crit, skill });
+    events.push({ type: "attack", from: unit.id, to: m.id, amount, crit, skill, splash: i > 0 });
   });
 }
 

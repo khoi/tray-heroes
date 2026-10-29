@@ -3,15 +3,18 @@ import { step } from "../src/game/combat";
 import { BASES } from "../src/game/data/items";
 import { MAX_GRADE } from "../src/game/data/grades";
 import { STAGES_PER_ACT, STAGE_COUNT, stageInfo } from "../src/game/data/world";
+import { writeFileSync } from "node:fs";
 import { newGame } from "../src/game/game";
+import { serialize } from "../src/game/save";
 import { openChest } from "../src/game/loot";
 import { RUNE_KEYS, type ClassKey, type ItemId } from "../src/game/schema";
 import { dps, heroStats, inventoryCap, modifiers } from "../src/game/stats";
 import { STEP_MS } from "../src/game/tuning";
 import type { GameEvent, GameState } from "../src/game/types";
 
-const HOURS = Number(process.argv[2] ?? 24);
-const SEED = Number(process.argv[3] ?? 7);
+const [hoursArg, seedArg, flag, savePath] = process.argv.slice(2);
+const HOURS = Number(hoursArg ?? 24);
+const SEED = Number(seedArg ?? 7);
 const BOT_EVERY_MS = 15_000;
 
 function score(state: GameState, cls: ClassKey): number {
@@ -98,3 +101,8 @@ for (const cls of state.party) {
 }
 console.log(`runes ${JSON.stringify(state.runes)}`);
 console.log(`chests waiting ${state.chests.length}, inventory ${state.inventory.length}`);
+
+if (flag === "--save" && savePath) {
+  writeFileSync(savePath, serialize(state, Date.now()));
+  console.log(`save written to ${savePath}`);
+}
