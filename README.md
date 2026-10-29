@@ -45,7 +45,9 @@ scripts/    balance simulation
 | Hell cleared | 3.1 h | 3.5 h |
 | Torment cleared | 38 h | 28 h |
 
-In `npm run dev`, open `/?sandbox` to start over with all three heroes in the party, 10B gold and 18 chests. Add `--save path.json` to write the bot's save. Paste it into `localStorage["tray-heroes/save"]` to jump to that point in the game.
+Add `--save path.json` to the balance command to write the bot's save. Paste it into `localStorage["tray-heroes/save"]` to jump to that point in the game.
+
+To test with everything unlocked, open `/?sandbox` while running `npm run dev`. It starts a new game with all three heroes in the party, 10B gold and 18 chests.
 
 ## Credits
 
