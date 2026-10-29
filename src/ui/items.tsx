@@ -81,6 +81,7 @@ export function ItemDetails({ item, children }: { item: Item; children?: ReactNo
   const g = grade(item.grade);
   const main = itemMain(item);
   const unique = item.unique ? UNIQUES[item.unique] : null;
+  const sockets = socketLines(item);
   return (
     <div className="item-details" style={{ "--grade": g.color } as CSSProperties}>
       <div className="item-head">
@@ -110,9 +111,9 @@ export function ItemDetails({ item, children }: { item: Item; children?: ReactNo
           </li>
         )}
       </ul>
-      {socketLines(item).length > 0 && (
+      {sockets.length > 0 && (
         <ul className="socket-list">
-          {socketLines(item).map((s, i) => (
+          {sockets.map((s, i) => (
             <li key={i} className={s.text ? "filled" : ""}>
               <span className="socket-dot" /> {s.text ?? `Empty ${s.kind.toLowerCase()} socket`}
             </li>

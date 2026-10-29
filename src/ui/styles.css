@@ -300,42 +300,7 @@ button.link {
   color: var(--muted);
 }
 
-/* Party */
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
-}
-
-.hero-card {
-  background: var(--panel-2);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.hero-card.selected {
-  border-color: var(--gold);
-}
-
-.hero-card.benched {
-  opacity: 0.7;
-}
-
-.hero-card header {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.hero-card header > div {
-  flex: 1;
-}
+/* Stats */
 
 .stats {
   display: grid;
@@ -352,20 +317,6 @@ button.link {
 .stats dd {
   margin: 0;
   text-align: right;
-}
-
-.equipment {
-  display: grid;
-  grid-template-columns: repeat(6, 44px);
-  gap: 6px;
-}
-
-.hero-card footer {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-  cursor: default;
 }
 
 /* Items */

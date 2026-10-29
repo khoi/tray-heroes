@@ -14,7 +14,7 @@ import {
   type AreaInfo,
   type Location,
 } from "./data/world";
-import { dropPart, openChest, takeMaterial } from "./loot";
+import { addMaterial, openChest, takeMaterial } from "./loot";
 import { pick, rand } from "./rng";
 import { CLASS_KEYS, type ChestKind, type ClassKey, type MonsterKey, type Save } from "./schema";
 import { heroStats, modifiers, type HeroStats, type Modifiers } from "./stats";
@@ -401,7 +401,7 @@ function onKill(ctx: Ctx, m: MonsterUnit): void {
   }
   state.kills[m.kind] = (state.kills[m.kind] ?? 0) + 1;
   ctx.events.push({ type: "kill", id: m.id, gold });
-  if (rand(state) < PART_DROP_CHANCE * (1 + mods.materialDrop) * (m.rank === "none" ? 1 : 5)) dropPart(state, MONSTERS[m.kind].part, ctx.events);
+  if (rand(state) < PART_DROP_CHANCE * (1 + mods.materialDrop) * (m.rank === "none" ? 1 : 5)) addMaterial(state, MONSTERS[m.kind].part, 1, ctx.events);
   rollChest(ctx, m);
 }
 

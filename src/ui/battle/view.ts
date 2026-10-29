@@ -372,7 +372,7 @@ export class BattleView {
       });
     } else if (e.damage === "lightning" && e.skill) {
       land = windup + 0.05 + stagger;
-      this.schedule(land - this.clock + this.clock, impact);
+      this.schedule(land, impact);
     } else if (ranged) {
       const arrow = cls === "ranger" || cls === "hunter";
       const flight = Math.max(0.12, (to.x - from.x) / (arrow ? 260 : 150));

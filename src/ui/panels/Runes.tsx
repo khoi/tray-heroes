@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { buyRune, resetRunes, runeStatus } from "../../game/actions";
 import { BRANCHES, RUNES, RUNE_KEYS, runePosition, type Branch, type ModKey, type RuneKey } from "../../game/data/runes";
 import { STATS, type StatKey } from "../../game/data/stats";
@@ -89,7 +89,7 @@ export function RunesPanel() {
                 transform={`translate(${p.x} ${p.y})`}
                 onClick={() => setFocus(k)}
                 onDoubleClick={() => engine.act((st) => buyRune(st, k))}
-                style={{ "--branch": BRANCH_COLOR[RUNES[k].branch] } as React.CSSProperties}
+                style={{ "--branch": BRANCH_COLOR[RUNES[k].branch] } as CSSProperties}
               >
                 <circle r={RADIUS} />
                 {RUNES[k].name.split(" ").map((word, i, words) => (

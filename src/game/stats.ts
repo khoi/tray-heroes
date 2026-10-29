@@ -96,8 +96,8 @@ export function heroTotals(state: Save, cls: ClassKey, mods: Modifiers, extra: S
   const def = CLASSES[cls];
   const hero = state.heroes[cls];
   const growth = Math.pow(HERO_GROWTH, hero.level - 1);
-  const stats: StatBlock = { ...def.base, life: def.base.life * growth, attack: def.base.attack * growth, armor: def.base.armor * growth };
-  delete stats.attackSpeed;
+  const { life, attack, armor, attackSpeed: _speed, ...rest } = def.base;
+  const stats: StatBlock = { ...rest, life: life * growth, attack: attack * growth, armor: armor * growth };
   const flags = new Set<UniqueFlag>();
   for (const id of Object.values(hero.equipment)) {
     const item = state.items[id];

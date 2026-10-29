@@ -1,12 +1,11 @@
 import { CLASSES, CLASS_KEYS } from "./data/classes";
 import { starterSkill } from "./data/skills";
 import { PLAGUE_MAX_CONTAMINATION, PLAGUE_REFILL_PER_S } from "./data/world";
-import { grantXp, newBattle, startBattle } from "./combat";
+import { grantXp, newBattle, startBattle, step } from "./combat";
 import { createItem } from "./loot";
 import type { ClassKey, Hero, Save } from "./schema";
 import { modifiers } from "./stats";
 import { MAX_CATCHUP_MS, STEP_MS } from "./tuning";
-import { step } from "./combat";
 import type { GameEvent, GameState } from "./types";
 
 export function blankHero(unlocked: boolean): Hero {

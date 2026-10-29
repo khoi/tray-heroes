@@ -1,6 +1,6 @@
 import { GRADES, MAX_GRADE, UNIQUE_MIN_GRADE, grade } from "./data/grades";
 import { AFFIXES, AFFIX_POOL, BASES, BASE_KEYS, UNIQUES, UNIQUE_KEYS, type BaseKey } from "./data/items";
-import { GEMS, gemKey, type GemKind, type MaterialKey, type PartKey } from "./data/materials";
+import { GEMS, gemKey, type GemKind, type MaterialKey } from "./data/materials";
 import { RELIC_COLORS, RELIC_POOL, RELIC_ROLL, type RelicColor } from "./data/relics";
 import type { StatKey } from "./data/stats";
 import { pick, rand, weighted } from "./rng";
@@ -136,8 +136,4 @@ export function openChest(state: Save, events: GameEvent[], kind?: ChestKind): R
   chestMaterials(state, chest, events);
   events.push({ type: "opened", items: items.map((i) => i.id) });
   return ok(items);
-}
-
-export function dropPart(state: Save, part: PartKey, events: GameEvent[]): void {
-  addMaterial(state, part, 1, events);
 }

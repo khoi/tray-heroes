@@ -42,6 +42,12 @@ const OUTCOME: Record<SynthOutcome, string> = {
   stay: "The cube held. Same grade, new item.",
 };
 
+function levelChoices(max: number): number[] {
+  const out = [1];
+  for (let level = 5; level <= max; level += 5) out.push(level);
+  return out;
+}
+
 function bagItems(state: ReturnType<typeof useGame>): Item[] {
   return state.inventory.map((id) => state.items[id]!).filter(Boolean);
 }
@@ -58,7 +64,6 @@ function Synthesis() {
   const maxLevel = chosen.length ? Math.max(...chosen.map((i) => i.level)) : 1;
   const avgLevel = chosen.length ? itemLevel(chosen.reduce((sum, it) => sum + it.level, 0) / chosen.length) : 1;
   const outLevel = Math.min(level ?? avgLevel, maxLevel);
-  const levels = Array.from(new Set([1, ...Array.from({ length: Math.floor(maxLevel / 5) }, (_, i) => (i + 1) * 5)])).filter((l) => l <= maxLevel);
   const fee = synthFee(g, outLevel);
 
   function toggle(id: ItemId) {
@@ -102,7 +107,7 @@ function Synthesis() {
           <label className="field">
             Output level
             <select value={outLevel} onChange={(e) => setLevel(Number(e.target.value))}>
-              {levels.map((l) => (
+              {levelChoices(maxLevel).map((l) => (
                 <option key={l} value={l}>
                   {l}
                 </option>
@@ -223,14 +228,11 @@ function Craft() {
           <label className="field">
             Level
             <select value={Math.min(level, top)} onChange={(e) => setLevel(Number(e.target.value))}>
-              {Array.from({ length: Math.max(1, top / 5) }, (_, i) => (i === 0 ? 1 : i * 5))
-                .concat(top)
-                .filter((v, i, a) => a.indexOf(v) === i)
-                .map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
+              {levelChoices(top).map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
             </select>
           </label>
           <div className="grade-picker">
