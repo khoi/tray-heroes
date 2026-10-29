@@ -60,6 +60,13 @@ const V1_STATS: Record<string, StatKey> = {
 
 const V1_SLOTS: Record<string, Slot> = { weapon: "mainWeapon", helmet: "helmet", armor: "armor", boots: "boots", ring: "ring", amulet: "amulet" };
 
+function regenPct(value: number, level: number, gradeIndex: number): number {
+  const scale = 1 + 0.15 * gradeIndex;
+  const roll = value / (22 * Math.pow(1.075, level - 1) * scale);
+  const quality = Math.min(1, Math.max(0, (roll - 0.01) / 0.015));
+  return (0.002 + quality * 0.004) * scale;
+}
+
 const difficultyOf = (level: number) => (level < 25 ? 0 : level < 48 ? 1 : level < 72 ? 2 : 3);
 
 export function migrateV1(json: unknown): Save | null {
@@ -74,7 +81,10 @@ export function migrateV1(json: unknown): Save | null {
       base: old.base as BaseKey,
       grade: old.grade,
       level: old.level,
-      affixes: old.affixes.flatMap((a): Affix[] => (V1_STATS[a.stat] ? [{ stat: V1_STATS[a.stat]!, value: a.value }] : [])),
+      affixes: old.affixes.flatMap((a): Affix[] => {
+        if (a.stat === "regen") return [{ stat: "regenPct", value: regenPct(a.value, old.level, old.grade) }];
+        return V1_STATS[a.stat] ? [{ stat: V1_STATS[a.stat]!, value: a.value }] : [];
+      }),
       unique: null,
       sockets: { decoration: Array(deco).fill(null), engraving: Array(engr).fill(null), inscription: Array(insc).fill(null) },
       locked: old.locked,

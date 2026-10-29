@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buyRune, enterPlague, equip, learnSkill, placeRelic, recruit, resetRunes, setParty, skillPoints, toggleLock, travel, unequip } from "./actions";
 import { startBattle, step } from "./combat";
-import { alchemize, corrode, craft, socket, synthesize, unsocket } from "./cube";
+import { alchemize, attune, corrode, craft, socket, synthesize, unsocket } from "./cube";
 import { CLASS_KEYS } from "./data/classes";
 import { RUNES, RUNE_KEYS } from "./data/runes";
 import { SKILLS, SKILL_KEYS, classSkills } from "./data/skills";
@@ -138,6 +138,18 @@ describe("sockets and crafting", () => {
     expect(heroStats(state, "knight", modifiers(state)).attack).toBeGreaterThan(before);
   });
 
+  it("refuses to craft into a full bag without spending anything", () => {
+    const state = game();
+    state.cube.level = 5;
+    state.gold = 1_000;
+    state.materials.dust = 50;
+    stock(state, 24, 0);
+    expect(craft(state, "helmet", 1, 1).ok).toBe(false);
+    expect(state.gold).toBe(1_000);
+    expect(state.materials.dust).toBe(50);
+    expect(state.inventory).toHaveLength(24);
+  });
+
   it("refuses sockets before the Cube level that unlocks them", () => {
     const state = game();
     state.materials.ruby1 = 1;
@@ -164,14 +176,16 @@ describe("sockets and crafting", () => {
 });
 
 describe("heroes, skills and runes", () => {
-  it("recruits a hero for gold and fills a free party slot", () => {
+  it("recruits a hero for gold without deploying it, and deploys only into a free party slot", () => {
     const state = game();
     state.gold = 10_000;
     expect(recruit(state, "ranger").ok).toBe(true);
     expect(state.heroes.ranger.unlocked).toBe(true);
-    expect(state.party).toEqual(["knight"]);
+    expect(state.gold).toBe(10_000 - 150);
+    expect(setParty(state, ["knight", "ranger"]).ok).toBe(false);
     expect(buyRune(state, "command1").ok).toBe(true);
-    expect(state.party).toEqual(["knight", "ranger"]);
+    expect(state.party).toEqual(["knight"]);
+    expect(setParty(state, ["knight", "ranger"]).ok).toBe(true);
     expect(setParty(state, ["ranger", "knight"]).ok).toBe(true);
   });
 
@@ -259,6 +273,23 @@ describe("chests", () => {
     expect(openChest(state, []).ok).toBe(false);
   });
 
+  it("keeps the Soulstone when act chest storage is full", () => {
+    const state = game();
+    const blade = createItem(state, 1, 9, "sword");
+    blade.affixes = [{ stat: "attack", value: 1e7 }];
+    state.inventory.push(blade.id);
+    equip(state, "knight", blade.id);
+    state.materials.soul0 = 1;
+    state.chests = Array.from({ length: 10 }, () => ({ kind: "act" as const, level: 8, cap: 6, difficulty: 0, plague: false }));
+    state.unlockedStage = 9;
+    state.autoAdvance = false;
+    travel(state, 9);
+    const events = run(state, 40_000);
+    expect(events.some((e) => e.type === "stageCleared")).toBe(true);
+    expect(state.materials.soul0).toBe(1);
+    expect(state.chests.filter((c) => c.kind === "act")).toHaveLength(10);
+  });
+
   it("needs a Soulstone to claim an act boss chest", () => {
     for (const souls of [0, 1]) {
       const state = game();
@@ -316,6 +347,24 @@ describe("plaguelands and relics", () => {
     expect(events.some((e) => e.type === "notice")).toBe(true);
     expect(state.location).toEqual({ kind: "stage", index: 5 });
     expect(enterPlague(state, 1, false).ok).toBe(false);
+  });
+
+  it("applies a placed relic's new stats immediately after attunement", () => {
+    const state = game();
+    state.plague.best = 1;
+    state.gold = 1e9;
+    const relic = createRelic(state, 3, "red");
+    placeRelic(state, 0, 0, relic.id);
+    const total = () => relic.stats.reduce((sum, a) => sum + a.value, 0);
+    const modsTotal = () => {
+      const mods = modifiers(state);
+      return relic.stats.reduce((sum, a) => sum + mods[a.stat], 0);
+    };
+    expect(modsTotal()).toBeCloseTo(total() * 1.5);
+    for (let i = 0; i < 5; i++) {
+      expect(attune(state, relic.id).ok).toBe(true);
+      expect(modsTotal()).toBeCloseTo(total() * 1.5);
+    }
   });
 
   it("corrodes items into contamination", () => {
@@ -404,7 +453,7 @@ describe("saves", () => {
       rng: 9,
       time: 100,
       gold: 1_000,
-      items: { "7": { id: 7, base: "sword", grade: 3, level: 20, affixes: [{ stat: "atkPct", value: 0.05 }], locked: true } },
+      items: { "7": { id: 7, base: "sword", grade: 3, level: 20, affixes: [{ stat: "atkPct", value: 0.05 }, { stat: "regen", value: 0.025 * 22 * Math.pow(1.075, 19) * 1.45 }], locked: true } },
       inventory: [],
       nextItemId: 8,
       heroes: { knight: { level: 30, xp: 5, equipment: { weapon: 7 } }, ranger: { level: 12, xp: 0, equipment: {} }, mage: { level: 1, xp: 0, equipment: {} } },
@@ -426,9 +475,29 @@ describe("saves", () => {
     expect(s.heroes.ranger.unlocked).toBe(true);
     expect(s.heroes.priest.unlocked).toBe(false);
     expect(s.heroes.knight.equipment.mainWeapon).toBe(7);
-    expect(s.items[7]!.affixes).toEqual([{ stat: "attackPct", value: 0.05 }]);
+    expect(s.items[7]!.affixes[0]).toEqual({ stat: "attackPct", value: 0.05 });
+    expect(s.items[7]!.affixes[1]!.stat).toBe("regenPct");
+    expect(s.items[7]!.affixes[1]!.value).toBeCloseTo(0.006 * 1.45);
     expect(s.location).toEqual({ kind: "stage", index: 40 });
     expect(s.chests[0]!.difficulty).toBe(1);
+  });
+
+  it("rejects saves that break the game's invariants", () => {
+    const base = () => JSON.parse(serialize(sandboxGame(1, 0), 0));
+    const variants: [string, (save: Record<string, any>) => void][] = [
+      ["short reliquary", (s) => (s.reliquary = [])],
+      ["stage out of range", (s) => (s.location = { kind: "stage", index: 999 })],
+      ["item in two places", (s) => s.stash.push(s.heroes.knight.equipment.mainWeapon)],
+      ["foreign skill", (s) => (s.heroes.knight.skills.volley = 1)],
+      ["slotted passive", (s) => ((s.heroes.knight.skills.toughness = 1), s.heroes.knight.slotted.push("toughness"))],
+      ["weapon on wrong class", (s) => (s.heroes.ranger.equipment.mainWeapon = s.heroes.knight.equipment.mainWeapon)],
+    ];
+    for (const [, mutate] of variants) {
+      const save = base();
+      mutate(save);
+      expect(parseSave(JSON.stringify(save)).ok).toBe(false);
+    }
+    expect(parseSave(JSON.stringify(base())).ok).toBe(true);
   });
 
   it("starts the sandbox with every hero and a fortune", () => {

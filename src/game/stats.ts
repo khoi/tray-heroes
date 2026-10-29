@@ -16,8 +16,9 @@ const modsCache = new WeakMap<Save, { key: string; mods: Modifiers }>();
 const modsKeys = new WeakMap<Modifiers, string>();
 
 export function modifiers(state: Save): Modifiers {
-  const pets = PETS.map((pet) => ((state.kills[pet.hunt] ?? 0) >= pet.kills ? 1 : 0)).join("");
-  const key = `${JSON.stringify(state.runes)}|${pets}|${JSON.stringify(state.reliquary)}|${state.plague.best}`;
+  const pets = PETS.map((pet) => (state.kills[pet.hunt] ?? 0) >= pet.kills);
+  const relics = state.reliquary.map((row) => row.map((id) => (id === null ? null : state.relics[id])));
+  const key = JSON.stringify([state.runes, pets, relics, state.plague.best]);
   const hit = modsCache.get(state);
   if (hit && hit.key === key) return hit.mods;
   const mods = computeModifiers(state);
@@ -62,18 +63,7 @@ export function itemMain(item: Item): Partial<Record<"life" | "attack" | "armor"
   return out;
 }
 
-const itemCache = new WeakMap<Item, { key: string; stats: StatBlock }>();
-
 export function itemStats(item: Item): StatBlock {
-  const key = `${item.grade}|${item.level}|${item.unique}|${JSON.stringify(item.affixes)}|${JSON.stringify(item.sockets)}`;
-  const hit = itemCache.get(item);
-  if (hit && hit.key === key) return hit.stats;
-  const stats = computeItemStats(item);
-  itemCache.set(item, { key, stats });
-  return stats;
-}
-
-function computeItemStats(item: Item): StatBlock {
   const out: StatBlock = { ...itemMain(item) };
   addStats(out, BASES[item.base].implicit, 1 + 0.1 * item.grade);
   for (const affix of item.affixes) addStats(out, { [affix.stat]: affix.value });
@@ -145,19 +135,13 @@ export interface HeroStats {
 
 const heroCache = new WeakMap<Save, Map<string, HeroStats>>();
 
-function itemSig(item: Item | undefined): string {
-  if (!item) return "-";
-  const s = item.sockets;
-  return `${item.id}:${item.grade}:${item.level}:${item.unique}:${item.affixes.map((a) => a.value).join("/")}:${s.decoration.join("/")}:${s.engraving.join("/")}:${s.inscription.map((a) => a?.value ?? "").join("/")}`;
-}
-
 export function heroStats(state: Save, cls: ClassKey, mods: Modifiers, extra: StatBlock = {}, penalty = 0): HeroStats {
   const hero = state.heroes[cls];
   const modsKey = modsKeys.get(mods);
   const key =
     modsKey === undefined
       ? null
-      : `${cls}|${penalty}|${hero.level}|${Object.values(hero.equipment).map((id) => itemSig(state.items[id])).join(",")}|${JSON.stringify(hero.skills)}|${JSON.stringify(extra)}|${modsKey}`;
+      : JSON.stringify([cls, penalty, hero.level, hero.skills, Object.values(hero.equipment).map((id) => state.items[id]), extra, modsKey]);
   let cache = heroCache.get(state);
   if (!cache) heroCache.set(state, (cache = new Map()));
   const hit = key === null ? undefined : cache.get(key);

@@ -361,9 +361,11 @@ function soulKey(area: AreaInfo): MaterialKey {
   return area.plague ? "soulPlague" : (`soul${area.difficulty}` as MaterialKey);
 }
 
+const chestFull = (state: Save, kind: ChestKind) => state.chests.filter((c) => c.kind === kind).length >= CHEST_RULES[kind].cap;
+
 function addChest(ctx: Ctx, kind: ChestKind, level: number): void {
   const { state, area } = ctx;
-  if (state.chests.filter((c) => c.kind === kind).length >= CHEST_RULES[kind].cap) return;
+  if (chestFull(state, kind)) return;
   state.chests.push({ kind, level, cap: area.plague ? 9 : gradeCap(area.difficulty, area.act), difficulty: area.plague ? 4 : area.difficulty, plague: area.plague });
   ctx.events.push({ type: "chest", kind });
 }
@@ -371,8 +373,11 @@ function addChest(ctx: Ctx, kind: ChestKind, level: number): void {
 function rollChest(ctx: Ctx, m: MonsterUnit): void {
   const { state, area, mods } = ctx;
   if (m.rank === "act") {
-    if (area.plague) return addChest(ctx, "act", m.level);
-    if (takeMaterial(state, soulKey(area))) return addChest(ctx, "act", m.level);
+    if (chestFull(state, "act")) {
+      ctx.events.push({ type: "notice", text: "Act chest storage is full. Open some to claim more." });
+      return;
+    }
+    if (area.plague || takeMaterial(state, soulKey(area))) return addChest(ctx, "act", m.level);
     ctx.events.push({ type: "notice", text: "Act boss defeated. Bring a Soulstone to claim its chest." });
     return;
   }

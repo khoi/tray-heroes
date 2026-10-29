@@ -6,7 +6,7 @@ import { PLAGUE_MAX_CONTAMINATION, PLAGUE_UNLOCK_STAGE, stageInfo } from "./data
 import { addMaterial, alchemyValue, createItem, itemLevel, rerollAffixes, rollAffix, rollRelicStats, synthFee, takeMaterial } from "./loot";
 import { pick, rand, weighted } from "./rng";
 import type { Item, ItemId, RelicId, Save } from "./schema";
-import { modifiers } from "./stats";
+import { inventoryCap, modifiers } from "./stats";
 import { CUBE_FEATURES, CUBE_MAX_LEVEL, CUBE_UNLOCK_HERO_LEVEL, cubeXpToNext, type CubeFeature } from "./tuning";
 import { fail, ok, type Result } from "./types";
 
@@ -132,6 +132,7 @@ export function craft(state: Save, base: BaseKey | null, tier: number, level: nu
   if (!gate.ok) return gate;
   if (tier < 1 || tier > CRAFT_TIERS || !craftTierUnlocked(state, tier)) return fail(`Tier ${tier} needs a higher Cube level`);
   if (level > maxCraftLevel(state)) return fail(`Can't craft above level ${maxCraftLevel(state)}`);
+  if (state.inventory.length >= inventoryCap(modifiers(state))) return fail("Bag is full");
   const cost = craftCost(tier);
   if (state.gold < cost.gold) return fail(`Needs ${cost.gold} gold`);
   if ((state.materials.dust ?? 0) < cost.dust) return fail(`Needs ${cost.dust} Arcane Dust`);

@@ -2,11 +2,11 @@ import { z } from "zod";
 import { CLASS_KEYS, type ClassKey as ClassKeyT } from "./data/classes";
 import { BASE_KEYS, SLOTS, UNIQUE_KEYS, type BaseKey as BaseKeyT, type UniqueKey as UniqueKeyT } from "./data/items";
 import { GEM_KEYS, MATERIAL_KEYS, PARTS, type GemKey, type MaterialKey as MaterialKeyT, type PartKey } from "./data/materials";
-import { RELIC_COLORS } from "./data/relics";
+import { RELIC_COLORS, RELIQUARIES } from "./data/relics";
 import { RUNE_KEYS, type RuneKey as RuneKeyT } from "./data/runes";
 import { SKILL_KEYS, type SkillKey as SkillKeyT } from "./data/skills";
 import { STAT_KEYS, type StatKey as StatKeyT } from "./data/stats";
-import { MONSTER_KEYS } from "./data/world";
+import { MONSTER_KEYS, PLAGUE_MAX_INTENSITY, STAGE_COUNT } from "./data/world";
 
 const enumOf = <T extends string>(keys: readonly T[]) => z.enum(keys as [T, ...T[]]);
 
@@ -55,9 +55,12 @@ export const Hero = z.object({
 
 export const Chest = z.object({ kind: ChestKind, level: z.number().int().min(1), cap: z.number().int().min(0).max(9), difficulty: z.number().int().min(0).max(4), plague: z.boolean() });
 
+const StageIndex = z.number().int().min(0).max(STAGE_COUNT - 1);
+const Intensity = z.number().int().min(1).max(PLAGUE_MAX_INTENSITY);
+
 export const Location = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("stage"), index: z.number().int().min(0) }),
-  z.object({ kind: z.literal("plague"), intensity: z.number().int().min(1), boss: z.boolean() }),
+  z.object({ kind: z.literal("stage"), index: StageIndex }),
+  z.object({ kind: z.literal("plague"), intensity: Intensity, boss: z.boolean() }),
 ]);
 
 export const Relic = z.object({
@@ -87,14 +90,14 @@ export const Save = z.object({
   chests: z.array(Chest),
   chestReadyAt: z.object({ common: z.number(), boss: z.number(), act: z.number() }),
   autoOpenAt: z.number(),
-  unlockedStage: z.number().int().min(0),
+  unlockedStage: StageIndex,
   location: Location,
-  lastStage: z.number().int().min(0),
+  lastStage: StageIndex,
   autoAdvance: z.boolean(),
   cube: z.object({ level: z.number().int().min(1), xp: z.number().min(0) }),
-  plague: z.object({ contamination: z.number().min(0), best: z.number().int().min(0), intensity: z.number().int().min(1) }),
+  plague: z.object({ contamination: z.number().min(0), best: z.number().int().min(0).max(PLAGUE_MAX_INTENSITY), intensity: Intensity }),
   relics: z.record(z.string(), Relic),
-  reliquary: z.array(z.array(RelicId.nullable())),
+  reliquary: z.array(z.array(RelicId.nullable()).length(3)).length(RELIQUARIES.length),
   rates: z.object({ gold: z.number(), xp: z.number(), windowGold: z.number(), windowXp: z.number(), windowStart: z.number() }),
 });
 

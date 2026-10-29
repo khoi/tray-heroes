@@ -85,12 +85,7 @@ export function buyRune(state: GameState, key: RuneKey): Result {
   if (state.gold < status.cost) return fail("Not enough gold");
   state.gold -= status.cost;
   state.runes[key] = status.owned + 1;
-  const effect = RUNES[key].effect;
-  if (effect === "partySlot") {
-    const recruit = state.party.length < partySize(modifiers(state)) ? (Object.keys(state.heroes) as ClassKey[]).find((c) => state.heroes[c].unlocked && !state.party.includes(c)) : undefined;
-    if (recruit) setParty(state, [...state.party, recruit]);
-  }
-  if (effect === "skillSlot") for (const cls of Object.keys(state.heroes) as ClassKey[]) autoSlot(state, cls);
+  if (RUNES[key].effect === "skillSlot") for (const cls of Object.keys(state.heroes) as ClassKey[]) autoSlot(state, cls);
   return done;
 }
 
@@ -121,7 +116,6 @@ export function recruit(state: GameState, cls: ClassKey): Result {
   const starter = starterSkill(cls);
   hero.skills[starter] = 1;
   hero.slotted = [starter];
-  if (state.party.length < partySize(modifiers(state))) setParty(state, [...state.party, cls]);
   return done;
 }
 
