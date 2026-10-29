@@ -155,6 +155,7 @@ export class BattleView {
 
     this.sync(state);
     for (const event of events) this.handle(state, event);
+    this.fadeOrphans(state);
     this.runTimeline();
 
     for (const [id, view] of this.views) {
@@ -222,12 +223,16 @@ export class BattleView {
       }
       view.home = Math.round(first + i * gap + (m.rank === "act" ? 6 : 0));
     });
+    this.unitLayer.children.sort((a, b) => a.x - b.x);
+  }
+
+  private fadeOrphans(state: GameState): void {
+    const battle = state.battle;
     const alive = new Set<number>([...battle.heroes.map((h) => h.id), ...battle.monsters.map((m) => m.id)]);
     for (const [id, view] of this.views) {
       if (alive.has(id) || this.doomed.has(id) || view.fade > 0) continue;
       view.fade = 0.5;
     }
-    this.unitLayer.children.sort((a, b) => a.x - b.x);
   }
 
   private schedule(delay: number, run: () => void): void {
