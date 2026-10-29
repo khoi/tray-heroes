@@ -27,6 +27,8 @@ export class UnitView {
   private readonly body = new Sprite();
   private readonly weapon = new Sprite();
   private readonly bar = new Graphics();
+  private readonly shadow = new Graphics();
+  private readonly aura = new Graphics();
   private readonly look: UnitLook;
   pose: Pose = "idle";
   private frames: Texture[] = [];
@@ -51,8 +53,10 @@ export class UnitView {
     this.home = x;
     this.root.position.set(x, y);
     this.rig.scale.set(look.size * look.dir, look.size);
-    this.root.addChild(this.rig, this.bar);
+    this.root.addChild(this.aura, this.shadow, this.rig, this.bar);
     const m = look.art?.manifest;
+    const foot = Math.max(4, Math.round(((m?.w ?? 16) * look.size) / (m && m.w >= 32 ? 3.2 : 2.6)));
+    this.shadow.ellipse(0, 0, foot, 1.5).fill({ color: 0x140b1a, alpha: 0.32 });
     if (m) this.body.anchor.set(m.anchorX / m.w, m.anchorY / m.h);
     else {
       this.body.texture = look.still;
@@ -146,6 +150,16 @@ export class UnitView {
 
   update(dt: number, walking: boolean, clock: number): void {
     this.t += dt;
+    if (this.look.boss && !this.down) {
+      const pulse = 0.5 + Math.sin(clock * 5) * 0.5;
+      const r = 7 + this.look.size * 4;
+      this.aura
+        .clear()
+        .ellipse(0, 0, r + pulse, 2.5 + pulse * 0.5)
+        .stroke({ color: 0xff4d4d, width: 1, alpha: 0.35 + pulse * 0.35 });
+    } else {
+      this.aura.clear();
+    }
     const m = this.look.art?.manifest;
     if (this.frames.length > 0) {
       let index = Math.floor(this.t * this.fps);

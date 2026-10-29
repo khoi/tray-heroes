@@ -21,6 +21,16 @@ npm run balance   # simulate a player, print time-to-milestone
 
 Progress saves to `localStorage` every 10 s and when the tab hides.
 
+## Art and sound
+
+Units, weapons, effects, sounds and music are CC0 and live in `public/`. `npm run import-art` rebuilds them from the source packs, cropping sprite sheets into one atlas per unit and writing a manifest the renderer reads:
+
+```sh
+npm run import-art -- --dungeon <0x72_DungeonTilesetII_v1.7> --ninja "<Ninja Adventure - Asset Pack>"
+```
+
+For hand-animated attack, hurt and death frames, buy Zerie's Tiny RPG Character Asset Packs 01 and 02 and run `npm run import-art -- --zerie <pack 01 dir> <pack 02 dir>`. The result goes to `public/art/licensed/` (git-ignored, the license forbids redistribution) and overrides the CC0 units it covers. Hit frames are detected from the sheets, so attacks land on the right frame without hand tuning.
+
 ## How it is built
 
 ```
@@ -32,7 +42,7 @@ scripts/    balance simulation
 - `src/game/combat.ts` steps the simulation in fixed 100 ms ticks with a seeded RNG, so runs are reproducible and testable. `game.ts#advance` converts wall-clock time into ticks; gaps over 10 minutes become offline rewards instead.
 - `src/game/schema.ts` is the save format (zod). Types are inferred from it, and saves are parsed at load, so a corrupt save starts a new game instead of crashing.
 - `src/game/data/` holds every table a designer would tune: classes, grades and drop weights, item bases and affixes, monsters and acts, runes, pets. Growth rates and timers live in `src/game/tuning.ts`.
-- `src/ui/battleView.ts` draws the strip with PixiJS 8 and renders on whichever window hosts it, so the battle keeps animating in the pop-out window while the main tab is hidden.
+- `src/ui/battle/` draws the strip with PixiJS 8 in a 56-pixel-tall world scaled up by a whole number, so pixels stay crisp. Units play idle, walk, attack, hurt and death; hits land on the attack's impact frame with slash, spark and explosion effects, knockback, hit-stop and sound. It renders on whichever window hosts it, so the battle keeps animating in the pop-out window while the main tab is hidden.
 
 ## Balancing
 
@@ -51,4 +61,4 @@ To test with everything unlocked, open `/?sandbox` while running `npm run dev`. 
 
 ## Credits
 
-Sprites are CC0 packs by Kenney and Clint Bellanger; see [CREDITS.md](CREDITS.md).
+Art and audio are CC0 packs by 0x72, pixel-boy & AAA, Kenney and Clint Bellanger; see [CREDITS.md](CREDITS.md).

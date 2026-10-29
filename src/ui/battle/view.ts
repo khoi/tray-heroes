@@ -4,7 +4,7 @@ import { PETS } from "../../game/data/pets";
 import { ACTS, DIFFICULTIES, MONSTERS, stageInfo } from "../../game/data/world";
 import type { ClassKey, MonsterKey } from "../../game/schema";
 import { heroStats, modifiers, type HeroStats } from "../../game/stats";
-import type { GameEvent, GameState } from "../../game/types";
+import type { GameEvent, GameState, MonsterUnit } from "../../game/types";
 import { compact } from "../format";
 import { audio } from "./audio";
 import { Backdrop, GROUND_Y, WORLD_H } from "./backdrop";
@@ -44,6 +44,9 @@ export class BattleView {
   private fx!: Effects;
   private views = new Map<number, UnitView>();
   private doomed = new Set<number>();
+  private ranks = new Map<number, MonsterUnit["rank"]>();
+  private dustClock = 0;
+  private readonly flashRect = new Graphics();
   private impactAt = new Map<number, number>();
   private timeline: Scheduled[] = [];
   private floaters: Floater[] = [];
@@ -57,6 +60,7 @@ export class BattleView {
   private lastFrame = 0;
   private scroll = 0;
   private hitStop = 0;
+  private screenFlash = 0;
   private shake = 0;
   private stats = new Map<ClassKey, HeroStats>();
   private stageText!: Text;
@@ -92,7 +96,7 @@ export class BattleView {
     this.fx = new Effects(this.bank);
     this.pet.anchor.set(0.5, 1);
     this.world.addChild(this.backdrop.root, this.fx.ambient, this.fx.back, this.pet, this.unitLayer, this.fx.front);
-    this.app.stage.addChild(this.world, this.overlay);
+    this.app.stage.addChild(this.world, this.flashRect, this.overlay);
     this.buildHud();
   }
 
@@ -134,7 +138,17 @@ export class BattleView {
     for (const unit of battle.heroes) this.stats.set(unit.cls, heroStats(state, unit.cls, mods));
 
     const walking = battle.phase.kind === "advancing";
-    if (walking) this.scroll += WALK_SPEED * dt;
+    if (walking) {
+      this.scroll += WALK_SPEED * dt;
+      this.dustClock += dt;
+      if (this.dustClock > 0.16) {
+        this.dustClock = 0;
+        for (const unit of battle.heroes) {
+          const view = this.views.get(unit.id);
+          if (view?.alive) this.fx.burst(view.root.x - 3, FEET_Y - 1, 2, [0xd9c7a3, 0xb8a27a], 14, { gravity: 10, life: 0.45, up: 8 });
+        }
+      }
+    }
     this.backdrop.update(this.scroll, dt);
 
     this.sync(state);
@@ -158,6 +172,9 @@ export class BattleView {
     this.shake = Math.max(0, this.shake - realDt * 18);
     const jitter = this.shake > 0.05 ? Math.round((Math.random() - 0.5) * this.shake) : 0;
     this.world.x = jitter * this.scale;
+    this.screenFlash = Math.max(0, this.screenFlash - realDt * 2.5);
+    this.flashRect.clear();
+    if (this.screenFlash > 0) this.flashRect.rect(0, 0, this.screenW, this.screenH).fill({ color: 0xffffff, alpha: this.screenFlash * 0.5 });
     this.updateHud(state, realDt);
     this.updateFloaters(realDt);
     this.app.render();
@@ -199,6 +216,7 @@ export class BattleView {
         );
         this.unitLayer.addChild(view.root);
         this.views.set(m.id, view);
+        this.ranks.set(m.id, m.rank);
       }
       view.home = Math.round(first + i * gap + (m.rank === "act" ? 6 : 0));
     });
@@ -415,6 +433,17 @@ export class BattleView {
     }
     view.fade = 0.001;
     this.fx.play("smoke", view.root.x, FEET_Y + 1, { fps: 20, anchorY: 1, scale: 0.6 });
+    const rank = this.ranks.get(id);
+    this.ranks.delete(id);
+    if (rank === "act" || rank === "stage") {
+      this.fx.play("explosion", view.root.x, FEET_Y + 2, { fps: 16, anchorY: 1, scale: rank === "act" ? 1.5 : 1 });
+      this.fx.burst(view.root.x, FEET_Y - 8, rank === "act" ? 40 : 20, [0xffd23f, 0xffffff, 0xff9b3f], 110, { up: 40, life: 0.9 });
+      this.shake = rank === "act" ? 5 : 3;
+      this.hitStop = 0.12;
+      this.screenFlash = rank === "act" ? 0.7 : 0.35;
+      if (rank === "act") this.showBanner("BOSS DEFEATED");
+      audio.play("explosion", 0.6, 0.8);
+    }
     this.fx.coins(view.root.x, FEET_Y - 6, 5, this.goldPoint());
     this.schedule(0.9, () => {
       this.goldPulse = 1;
