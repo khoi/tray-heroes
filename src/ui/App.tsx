@@ -17,6 +17,22 @@ const TABS = ["party", "bag", "cube", "runes", "map", "pets"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = { party: "Party", bag: "Bag", cube: "Cube", runes: "Runes", map: "Map", pets: "Pets" };
 
+function OtherTab() {
+  useGame();
+  if (engine.inControl) return null;
+  return (
+    <div className="modal-backdrop">
+      <div className="modal" role="dialog" aria-label="Open in another tab">
+        <h2>Playing in another tab</h2>
+        <p>Tray Heroes is running in a newer tab, so this one is paused to keep the two from overwriting each other's save.</p>
+        <button type="button" className="primary" onClick={() => location.reload()}>
+          Play here instead
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OfflineReport() {
   useGame();
   const report = engine.offline;
@@ -107,6 +123,7 @@ export function App() {
         ))}
       </div>
       <OfflineReport />
+      <OtherTab />
     </div>
   );
 }

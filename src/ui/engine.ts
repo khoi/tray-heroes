@@ -2,9 +2,10 @@ import { useSyncExternalStore } from "react";
 import { advance, newGame, type Clock, type OfflineReport } from "../game/game";
 import { sandboxGame } from "../game/sandbox";
 import { parseSave, serialize } from "../game/save";
-import type { GameEvent, GameState, Result } from "../game/types";
+import { fail, type GameEvent, type GameState, type Result } from "../game/types";
 
 const SAVE_KEY = "tray-heroes/save";
+const TAB_LOCK = "tray-heroes/active-tab";
 const UI_INTERVAL_MS = 150;
 const AUTOSAVE_MS = 10_000;
 const EVENT_BUFFER = 300;
@@ -31,6 +32,7 @@ class Engine {
   state: GameState;
   offline: OfflineReport | null = null;
   notices: Notice[] = [];
+  inControl = true;
   private clock: Clock;
   private events: GameEvent[] = [];
   private listeners = new Set<() => void>();
@@ -44,9 +46,16 @@ class Engine {
     this.state = load(now);
     this.clock = { last: this.state.savedAt, acc: 0 };
     this.tick(now);
+    navigator.locks
+      ?.request(TAB_LOCK, { steal: true }, () => new Promise<never>(() => {}))
+      .catch(() => {
+        this.inControl = false;
+        this.notify(Date.now());
+      });
   }
 
   tick(now: number): void {
+    if (!this.inControl) return;
     const report = advance(this.state, this.clock, now, this.events);
     if (report) this.offline = report;
     if (this.events.length > EVENT_BUFFER) this.events.splice(0, this.events.length - EVENT_BUFFER);
@@ -61,6 +70,7 @@ class Engine {
   }
 
   act<T>(run: (state: GameState) => Result<T>, success?: (value: T) => string): Result<T> {
+    if (!this.inControl) return fail("The game is running in another tab");
     const result = run(this.state);
     if (!result.ok) this.notice(result.reason, "bad");
     else if (success) this.notice(success(result.value), "good");
@@ -84,6 +94,7 @@ class Engine {
   }
 
   save(now: number): void {
+    if (!this.inControl) return;
     this.lastSave = now;
     localStorage.setItem(SAVE_KEY, serialize(this.state, now));
   }
