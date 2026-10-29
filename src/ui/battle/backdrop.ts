@@ -71,6 +71,20 @@ const THEMES: Record<Theme, ThemeDef> = {
     decor: [d(29), d(19), d(41), d(29), d(20)],
     horizonGlow: "#ff5a2a",
   },
+  plague: {
+    sky: ["#141a12", "#1d2618", "#2a361f", "#3d4a26", "#56632d", "#738236"],
+    body: { x: 0.22, y: 13, r: 7, color: "#d7ff7a", glow: "#9fd84a" },
+    clouds: null,
+    ridges: [
+      { ridge: { base: 27, waves: [[7, 3, 2.2], [3, 8, 0.5], [1.5, 15, 1.1]], fill: "#2c2a3a", rim: "#47405a", jagged: true }, speed: 0.12 },
+      { ridge: { base: 36, waves: [[3, 4, 0.2], [2, 9, 1.8]], fill: "#1f2b1c", rim: "#3d5a2a" }, speed: 0.32 },
+    ],
+    trees: { color: "#18231a", every: 9 },
+    ground: [d(36), d(38), d(37), d(36), d(38)],
+    dirt: "#14140f",
+    decor: [d(64), d(65), d(42), d(19), d(65)],
+    horizonGlow: "#8fdc3a",
+  },
 };
 
 export const skyTop = (theme: Theme): string => THEMES[theme].sky[0]!;

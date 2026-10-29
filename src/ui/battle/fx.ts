@@ -179,15 +179,15 @@ export class Effects {
 
   private spawnAmbient(dt: number, scrollSpeed: number): void {
     this.spawnClock += dt;
-    const every = this.theme === "ember" ? 0.06 : this.theme === "forest" ? 0.35 : 0.12;
+    const every = this.theme === "ember" || this.theme === "plague" ? 0.06 : this.theme === "forest" ? 0.35 : 0.12;
     while (this.spawnClock > every && this.ambientParticles.length < 90) {
       this.spawnClock -= every;
       const sprite = new Sprite(Texture.WHITE);
       sprite.width = 1;
       sprite.height = 1;
       let p: Particle;
-      if (this.theme === "ember") {
-        sprite.tint = Math.random() < 0.5 ? 0xff7a3a : 0xffc04a;
+      if (this.theme === "ember" || this.theme === "plague") {
+        sprite.tint = this.theme === "plague" ? (Math.random() < 0.5 ? 0x9fe84a : 0xd7ff7a) : Math.random() < 0.5 ? 0xff7a3a : 0xffc04a;
         sprite.blendMode = "add";
         sprite.position.set(Math.random() * (this.width + scrollSpeed), GROUND_Y + Math.random() * 6);
         const life = 1.6 + Math.random() * 2;

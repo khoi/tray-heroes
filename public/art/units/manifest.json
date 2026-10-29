@@ -84,6 +84,90 @@
     "kind": "staff"
    }
   },
+  "priest": {
+   "src": "/art/units/priest.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 8,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_mace.png",
+    "w": 10,
+    "h": 24,
+    "kind": "blade"
+   }
+  },
+  "hunter": {
+   "src": "/art/units/hunter.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 7,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_bow_2.png",
+    "w": 14,
+    "h": 26,
+    "kind": "bow"
+   }
+  },
+  "slayer": {
+   "src": "/art/units/slayer.png",
+   "w": 16,
+   "h": 28,
+   "anchorX": 8,
+   "anchorY": 27,
+   "top": 9,
+   "idle": {
+    "row": 0,
+    "frames": 4
+   },
+   "walk": {
+    "row": 1,
+    "frames": 4
+   },
+   "attacks": [],
+   "hurt": {
+    "row": 2,
+    "frames": 1
+   },
+   "death": null,
+   "weapon": {
+    "src": "/art/units/weapon_double_axe.png",
+    "w": 16,
+    "h": 24,
+    "kind": "blade"
+   }
+  },
   "goblin": {
    "src": "/art/units/goblin.png",
    "w": 16,

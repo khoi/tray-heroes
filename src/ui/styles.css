@@ -855,3 +855,437 @@ button.link {
     background-position-x: var(--end);
   }
 }
+
+/* Shared controls */
+
+.row.tight {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.row.spread {
+  justify-content: space-between;
+}
+
+.grow {
+  flex: 1;
+}
+
+.field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+}
+
+.inline-icon {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.item-tile.unique {
+  box-shadow: 0 0 0 1px #000, 0 0 8px var(--grade);
+}
+
+.item-gems {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 8px;
+  color: #9ee8ff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.unique-line {
+  color: #ffd23f;
+}
+
+.socket-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.socket-list li.filled {
+  color: #9ee8ff;
+}
+
+.socket-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+
+.socket-list li.filled .socket-dot {
+  background: currentColor;
+}
+
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 3px 8px;
+}
+
+.material-chip:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.materials section {
+  margin-bottom: 14px;
+}
+
+.materials h4 {
+  margin-bottom: 6px;
+}
+
+/* Heroes */
+
+.heroes {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 16px;
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 6px 10px;
+}
+
+.roster-row.selected {
+  border-color: var(--gold);
+}
+
+.roster-row.locked {
+  opacity: 0.6;
+}
+
+.roster-name {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  font-size: 14px;
+}
+
+.roster-name .muted {
+  font-size: 12px;
+}
+
+.hero-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.hero-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.heroes .equipment {
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  gap: 6px;
+}
+
+.stat-row {
+  display: contents;
+}
+
+/* Skills */
+
+.skills-body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+}
+
+.skill-summary {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tier {
+  display: grid;
+  grid-template-columns: 34px repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+  align-items: stretch;
+}
+
+.tier.closed {
+  opacity: 0.4;
+}
+
+.tier-label {
+  color: var(--muted);
+  font-size: 12px;
+  align-self: center;
+  text-align: right;
+}
+
+.skill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 12px;
+  padding: 6px 8px;
+  min-height: 46px;
+}
+
+.skill.active {
+  border-color: #6a5326;
+}
+
+.skill.learned {
+  background: #2f2739;
+}
+
+.skill.active.learned {
+  border-color: var(--gold);
+}
+
+.skill.passive.learned {
+  border-color: #62c3ff;
+}
+
+.skill.focus {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+.skill-name {
+  font-weight: 600;
+  text-align: left;
+}
+
+.skill-level {
+  color: var(--muted);
+}
+
+.slot-badge {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  background: var(--gold);
+  color: #2a1d05;
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 0 5px;
+}
+
+.skill-side {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Cube */
+
+.cube-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cube-level .bar {
+  margin-top: 0;
+  max-width: 260px;
+}
+
+.craft-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.socket-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.socket-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  text-transform: capitalize;
+}
+
+/* Runes */
+
+.rune-scroll {
+  overflow: auto;
+  max-height: 640px;
+}
+
+.rune-core {
+  fill: var(--gold);
+}
+
+.branch-label {
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 11px;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.rune.ready circle,
+.rune.owned circle {
+  stroke: var(--branch);
+}
+
+.rune.maxed circle {
+  fill: color-mix(in srgb, var(--branch) 25%, #1a1520);
+  stroke: var(--branch);
+}
+
+.rune-side button {
+  margin-top: 4px;
+}
+
+/* Map & plague */
+
+.plague-title {
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
+.plague {
+  background: #1b2117;
+  border: 2px solid #3d5a2a;
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.plague .row {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.bar.plague-bar span {
+  background: #9fe84a;
+}
+
+/* Relics */
+
+.reliquaries {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.reliquary {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.reliquary.closed {
+  opacity: 0.55;
+}
+
+.relic-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.relic-slot {
+  text-align: left;
+  font-size: 12px;
+  min-height: 34px;
+}
+
+.relic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.relic {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+}
+
+.relic.selected {
+  outline: 2px solid #fff;
+}
+
+.relic-gem {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.relic-list .placed {
+  opacity: 0.6;
+}
+
+@media (max-width: 820px) {
+  .heroes,
+  .skills-body,
+  .hero-body {
+    grid-template-columns: 1fr;
+  }
+}

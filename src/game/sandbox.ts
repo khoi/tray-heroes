@@ -3,7 +3,8 @@ import { CLASSES, CLASS_KEYS } from "./data/classes";
 import { GEM_KEYS, PARTS, type MaterialKey } from "./data/materials";
 import { starterSkill } from "./data/skills";
 import { newGame } from "./game";
-import { createItem } from "./loot";
+import { createItem, createRelic } from "./loot";
+import { PLAGUE_UNLOCK_STAGE } from "./data/world";
 import type { Chest } from "./schema";
 import type { GameState } from "./types";
 
@@ -18,6 +19,7 @@ export function sandboxGame(seed: number, now: number): GameState {
   for (const cls of CLASS_KEYS) {
     const hero = state.heroes[cls];
     hero.unlocked = true;
+    hero.level = 30;
     if (!hero.equipment.mainWeapon) hero.equipment.mainWeapon = createItem(state, 1, 0, CLASSES[cls].main).id;
     hero.skills[starterSkill(cls)] = 1;
     hero.slotted = [starterSkill(cls)];
@@ -29,6 +31,10 @@ export function sandboxGame(seed: number, now: number): GameState {
   for (const key of stock) state.materials[key] = 5;
   state.materials.dust = 500;
   state.cube = { level: 25, xp: 0 };
+  state.unlockedStage = PLAGUE_UNLOCK_STAGE + 1;
+  state.plague.best = 1;
+  for (const color of ["red", "green", "blue"] as const) createRelic(state, 3, color);
+  for (let g = 0; g < 10; g++) state.inventory.push(createItem(state, 30, g).id);
   state.deployReadyAt = 0;
   return state;
 }

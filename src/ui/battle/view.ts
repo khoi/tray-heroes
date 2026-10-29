@@ -1,8 +1,10 @@
 import { Application, Container, Graphics, Sprite, Text, type TextStyleOptions } from "pixi.js";
 import { CLASSES } from "../../game/data/classes";
 import { PETS } from "../../game/data/pets";
-import { ACTS, DIFFICULTIES, MONSTERS, stageInfo } from "../../game/data/world";
-import type { ClassKey, MonsterKey } from "../../game/schema";
+import { SKILLS } from "../../game/data/skills";
+import { STATUS, type DamageType, type StatusKind } from "../../game/data/stats";
+import { DIFFICULTIES, MONSTERS, areaInfo } from "../../game/data/world";
+import type { ClassKey } from "../../game/schema";
 import { heroStats, modifiers, type HeroStats } from "../../game/stats";
 import type { GameEvent, GameState, MonsterUnit } from "../../game/types";
 import { compact } from "../format";
@@ -19,7 +21,9 @@ const WALK_SPEED = 30;
 const HERO_GAP = 17;
 const MONSTER_GAP = 16;
 const MIN_WORLD_W = 240;
-const RANGED_MONSTERS = new Set<MonsterKey>(["scorpion", "reaper"]);
+const TYPE_COLOR: Record<DamageType, number> = { physical: 0xffffff, fire: 0xffa25a, cold: 0x9ee8ff, lightning: 0xfff07a, chaos: 0xc79bff };
+const TINT_ORDER: StatusKind[] = ["freeze", "stun", "chill", "shock", "ignite", "poison", "bleed"];
+const STATUS_COLOR: Record<StatusKind, number> = { stun: 0xfff2a8, freeze: 0x9ee8ff, chill: 0x9ec8ff, ignite: 0xff9b3f, shock: 0xfff07a, bleed: 0xff5a5a, poison: 0x8aff6a };
 
 interface Floater {
   text: Text;
@@ -129,7 +133,8 @@ export class BattleView {
     const dt = this.hitStop > 0 ? 0 : realDt;
 
     const battle = state.battle;
-    const theme = ACTS[stageInfo(battle.stage).act]!.theme;
+    const area = areaInfo(battle.location);
+    const theme = area.theme;
     if (this.backdrop.theme !== theme) this.app.renderer.background.color = skyTop(theme);
     this.backdrop.setTheme(theme);
     this.fx.setTheme(theme, this.worldW);
@@ -137,7 +142,7 @@ export class BattleView {
 
     const mods = modifiers(state);
     this.stats.clear();
-    for (const unit of battle.heroes) this.stats.set(unit.cls, heroStats(state, unit.cls, mods));
+    for (const unit of battle.heroes) this.stats.set(unit.cls, heroStats(state, unit.cls, mods, {}, area.resPenalty));
 
     const walking = battle.phase.kind === "advancing";
     if (walking) {
@@ -163,7 +168,10 @@ export class BattleView {
       view.update(dt, walking || moving, this.clock);
       const hero = battle.heroes.find((h) => h.id === id);
       const monster = battle.monsters.find((m) => m.id === id);
-      view.drawBar(hero ? hero.hp / (this.stats.get(hero.cls)?.maxHp ?? 1) : monster ? monster.hp / monster.maxHp : 0);
+      const statuses = (hero ?? monster)?.statuses ?? [];
+      const top = TINT_ORDER.find((k) => statuses.some((st) => st.kind === k));
+      view.statusTint = top ? STATUS_COLOR[top] : null;
+      view.drawBar(hero ? hero.hp / (this.stats.get(hero.cls)?.maxLife ?? 1) : monster ? monster.hp / monster.maxHp : 0);
       if (view.fade > 1) {
         view.root.destroy({ children: true });
         this.views.delete(id);
@@ -248,7 +256,7 @@ export class BattleView {
 
   private ratioOf(state: GameState, id: number): number {
     const hero = state.battle.heroes.find((h) => h.id === id);
-    if (hero) return hero.hp / (this.stats.get(hero.cls)?.maxHp ?? 1);
+    if (hero) return hero.hp / (this.stats.get(hero.cls)?.maxLife ?? 1);
     const monster = state.battle.monsters.find((m) => m.id === id);
     return monster ? monster.hp / monster.maxHp : 0;
   }
@@ -299,6 +307,13 @@ export class BattleView {
         audio.play("levelup", 0.35);
         return;
       }
+      case "heal":
+      case "buff":
+      case "trap":
+      case "revive":
+      case "dot":
+      case "status":
+        return this.support(state, e);
       case "stageCleared":
         this.showBanner("STAGE CLEAR");
         audio.play("clear", 0.3);
@@ -312,51 +327,59 @@ export class BattleView {
     }
   }
 
+  private skillAoe(e: Extract<GameEvent, { type: "attack" }>): boolean {
+    const def = e.skill ? SKILLS[e.skill] : null;
+    return !!def && def.kind === "active" && def.effects.some((ef) => (ef.kind === "hit" || ef.kind === "trap") && ef.target !== "front");
+  }
+
   private heroAttack(state: GameState, e: Extract<GameEvent, { type: "attack" }>): void {
     const target = this.views.get(e.to);
     const attacker = this.views.get(e.from);
     const unit = state.battle.heroes.find((h) => h.id === e.from);
     if (!target || !unit) return;
     const cls = unit.cls;
-    const def = CLASSES[cls];
-    const aoeSkill = e.skill && def.skill.aoe;
-    if (e.splash && !aoeSkill) {
+    const aoe = this.skillAoe(e);
+    if (e.splash && !aoe) {
       target.pending++;
       const delay = Math.max(0, (this.impactAt.get(e.to) ?? this.clock) - this.clock);
       this.schedule(delay, () => {
         target.applyHit(this.ratioOf(state, e.to));
         target.hurt(0xffb38a);
-        this.fx.play("flame", target.root.x, FEET_Y - 4, { fps: 20, anchorY: 1 });
+        this.typeFx(e.damage, target.root.x, FEET_Y - 4, 0.7);
       });
       return;
     }
     const interval = this.stats.get(cls)?.interval ?? 1;
-    const windup = attacker && !e.splash ? attacker.attack(e.skill, interval) : 0;
+    const windup = attacker && !e.splash ? attacker.attack(e.skill !== null, interval) : 0;
     target.pending++;
     const from = attacker ? { x: attacker.root.x + 6, y: FEET_Y - 9 } : { x: this.heroFront(), y: FEET_Y - 9 };
     const to = { x: target.root.x, y: FEET_Y - Math.min(10, target.height * 0.6) };
-    const impact = () => this.impact(state, e.to, e.amount, e.crit, e.skill, cls);
+    const impact = () => this.impact(state, e, cls);
+    const ranged = CLASSES[cls].ranged;
+    const stagger = e.splash ? 0.07 * (1 + Math.random()) : 0;
     let land = windup;
-    if (aoeSkill && cls === "mage") {
-      const stagger = e.splash ? 0.08 * (1 + Math.random()) : 0;
+    if (aoe && (e.damage === "fire" || e.damage === "cold")) {
       land = windup + 0.45 + stagger;
       this.schedule(windup + stagger, () => {
-        this.fx.projectile("fireball", { x: to.x - 18, y: -8 }, to, 0.45, 0, impact);
-        audio.play("fireball", 0.5);
+        this.fx.projectile(e.damage === "fire" ? "fireball" : "orb", { x: to.x - 18, y: -8 }, to, 0.45, 0, impact);
+        if (!e.splash) audio.play("fireball", 0.5);
       });
-    } else if (aoeSkill && cls === "ranger") {
-      const stagger = e.splash ? 0.06 * (1 + Math.random()) : 0;
+    } else if (aoe && ranged && e.damage !== "lightning") {
       land = windup + 0.3 + stagger;
       this.schedule(windup + stagger, () => {
         this.fx.projectile("arrow", { x: to.x - 26, y: -6 }, to, 0.3, 0, impact);
         if (!e.splash) audio.play("bow", 0.6);
       });
-    } else if (cls === "ranger" || cls === "mage") {
-      const flight = Math.max(0.12, (to.x - from.x) / (cls === "ranger" ? 260 : 150));
+    } else if (e.damage === "lightning" && e.skill) {
+      land = windup + 0.05 + stagger;
+      this.schedule(land - this.clock + this.clock, impact);
+    } else if (ranged) {
+      const arrow = cls === "ranger" || cls === "hunter";
+      const flight = Math.max(0.12, (to.x - from.x) / (arrow ? 260 : 150));
       land = windup + flight;
       this.schedule(windup, () => {
-        this.fx.projectile(cls === "ranger" ? "arrow" : "orb", from, to, flight, cls === "ranger" ? 3 : 1, impact);
-        audio.play(cls === "ranger" ? "bow" : "magic", 0.45);
+        this.fx.projectile(arrow ? "arrow" : e.damage === "fire" ? "fireball" : "orb", from, to, flight, arrow ? 3 : 1, impact);
+        audio.play(arrow ? "bow" : "magic", 0.4);
       });
     } else {
       this.schedule(windup, impact);
@@ -365,38 +388,49 @@ export class BattleView {
     this.impactAt.set(e.to, Math.max(this.impactAt.get(e.to) ?? 0, this.clock + land));
   }
 
-  private impact(state: GameState, id: number, amount: number, crit: boolean, skill: boolean, cls: ClassKey): void {
-    const target = this.views.get(id);
+  private typeFx(type: DamageType, x: number, y: number, scale = 1): void {
+    if (type === "fire") this.fx.play("flame", x, y + 6, { fps: 20, anchorY: 1, scale });
+    else if (type === "cold") this.fx.play("spark", x, y, { fps: 22, tint: 0x9ee8ff, scale });
+    else if (type === "lightning") this.fx.play("thunder", x, y + 6, { fps: 22, anchorY: 1, scale });
+    else if (type === "chaos") this.fx.play("claw", x, y, { fps: 22, tint: 0xb06bff, scale });
+    else this.fx.play("cut", x, y, { fps: 24, scale: scale * 0.8 });
+  }
+
+  private impact(state: GameState, e: Extract<GameEvent, { type: "attack" }>, cls: ClassKey): void {
+    const target = this.views.get(e.to);
     if (!target) return;
-    target.applyHit(this.ratioOf(state, id));
+    const crit = e.outcome === "crit";
+    const skill = e.skill !== null;
+    target.applyHit(this.ratioOf(state, e.to));
     target.hurt();
     const x = target.root.x;
     const y = FEET_Y - Math.min(10, target.height * 0.6);
-    if (skill && cls === "mage") {
-      this.fx.play("explosion", x, FEET_Y + 2, { fps: 22, anchorY: 1 });
-      this.fx.burst(x, FEET_Y - 4, 18, [0xffa23a, 0xff5a2a, 0xffe08a], 90, { up: 30, life: 0.7 });
-      this.shake = 3;
-      audio.play("explosion", 0.5);
-    } else if (skill && cls === "knight") {
-      this.fx.play("cross", x, y, { fps: 18, scale: 1 });
+    if (skill && (e.damage === "fire" || this.skillAoe(e))) {
+      this.fx.play("explosion", x, FEET_Y + 2, { fps: 22, anchorY: 1, scale: e.damage === "fire" ? 1 : 0.7 });
+      this.fx.burst(x, FEET_Y - 4, 14, e.damage === "fire" ? [0xffa23a, 0xff5a2a, 0xffe08a] : [0xffffff, 0xfff2a8], 90, { up: 30, life: 0.7 });
+      this.shake = Math.max(this.shake, 2.5);
+      if (!e.splash) audio.play("explosion", 0.45);
+    } else if (skill && e.damage === "lightning") {
+      this.fx.play("thunder", x, FEET_Y + 2, { fps: 20, anchorY: 1, scale: 1.4 });
+      this.shake = Math.max(this.shake, 2);
+      audio.play("heavy", 0.5);
+    } else if (skill && !CLASSES[cls].ranged) {
+      this.fx.play("cross", x, y, { fps: 18 });
       this.fx.play("dust", x, FEET_Y, { fps: 20, anchorY: 1 });
-      this.shake = 2.5;
+      this.shake = Math.max(this.shake, 2.5);
       audio.play("heavy", 0.6);
-    } else if (cls === "knight") {
-      this.fx.play(crit ? "slash2" : "slash", x, y, { fps: 22, flip: Math.random() < 0.5 });
+    } else if (!CLASSES[cls].ranged) {
+      this.fx.play(crit ? "slash2" : "slash", x, y, { fps: 22, flip: Math.random() < 0.5, tint: cls === "slayer" ? 0xff8a8a : undefined });
       audio.play(crit ? "crit" : (["hit1", "hit2", "hit3"] as const)[Math.floor(Math.random() * 3)]!, 0.5);
-    } else if (cls === "mage") {
-      this.fx.play("spark", x, y, { fps: 22, tint: 0x9ee8ff });
-      audio.play(crit ? "crit" : "hit2", 0.4);
     } else {
-      this.fx.play(crit ? "spark" : "cut", x, y, { fps: 24, scale: crit ? 1 : 0.7 });
+      this.typeFx(e.damage, x, y, crit ? 1 : 0.8);
       audio.play(crit ? "crit" : "hit1", 0.4);
     }
     this.fx.burst(x, y, crit ? 10 : 5, [0xffffff, 0xfff2a8], crit ? 70 : 45, { life: 0.35 });
     if (crit || skill) this.hitStop = Math.max(this.hitStop, skill ? 0.08 : 0.05);
     if (crit) this.shake = Math.max(this.shake, 1.5);
-    const color = skill ? 0xff9b3f : crit ? 0xffd23f : 0xffffff;
-    this.float(compact(amount) + (crit ? "!" : ""), x, target.worldTop - 2, crit || skill ? 16 : 12, color);
+    const color = skill ? 0xff9b3f : crit ? 0xffd23f : TYPE_COLOR[e.damage];
+    this.float(compact(e.amount) + (crit ? "!" : ""), x, target.worldTop - 2, crit || skill ? 16 : 12, color);
   }
 
   private monsterAttack(state: GameState, e: Extract<GameEvent, { type: "hurt" }>): void {
@@ -404,27 +438,86 @@ export class BattleView {
     const attacker = this.views.get(e.from);
     const monster = state.battle.monsters.find((m) => m.id === e.from);
     if (!target) return;
-    const windup = attacker && monster ? attacker.attack(monster.rank !== "none" && Math.random() < 0.3, MONSTERS[monster.kind].interval) : 0;
+    const windup = attacker && monster ? attacker.attack(e.heavy, MONSTERS[monster.kind].interval) : 0;
     target.pending++;
     const impact = () => {
       target.applyHit(this.ratioOf(state, e.to));
-      target.hurt(0xff6b6b);
-      this.fx.play("claw", target.root.x + 2, FEET_Y - 8, { fps: 22, flip: true, scale: 0.8 });
+      if (e.outcome === "dodged") {
+        this.float("Dodge", target.root.x, target.worldTop - 2, 11, 0xc9c4bd);
+        audio.play("whoosh", 0.25);
+        return;
+      }
+      target.hurt(e.outcome === "blocked" ? 0xc7d2e0 : 0xff6b6b);
+      this.fx.play("claw", target.root.x + 2, FEET_Y - 8, { fps: 22, flip: true, scale: 0.8, tint: e.damage === "physical" ? undefined : TYPE_COLOR[e.damage] });
       this.fx.burst(target.root.x, FEET_Y - 8, 5, [0xff6b6b, 0xffffff], 40, { life: 0.3 });
-      this.float(compact(e.amount), target.root.x, target.worldTop - 2, 11, 0xff8080);
-      audio.play("hit3", 0.3, 0.8);
+      if (e.heavy) this.shake = Math.max(this.shake, 2);
+      this.float(e.outcome === "blocked" ? `Block ${compact(e.amount)}` : compact(e.amount), target.root.x, target.worldTop - 2, 11, e.outcome === "blocked" ? 0xc7d2e0 : 0xff8080);
+      audio.play("hit3", e.outcome === "blocked" ? 0.2 : 0.3, e.outcome === "blocked" ? 1.4 : 0.8);
     };
     let land = windup;
-    if (monster && RANGED_MONSTERS.has(monster.kind) && attacker) {
+    if (monster && MONSTERS[monster.kind].ranged && attacker) {
       const from = { x: attacker.root.x - 6, y: FEET_Y - 9 };
       const to = { x: target.root.x, y: FEET_Y - 8 };
       const flight = Math.max(0.12, (from.x - to.x) / 180);
       land = windup + flight;
-      this.schedule(windup, () => this.fx.projectile(monster.kind === "reaper" ? "orb" : "arrow", from, to, flight, 2, impact));
+      this.schedule(windup, () => this.fx.projectile(MONSTERS[monster.kind].type === "physical" ? "arrow" : "orb", from, to, flight, 2, impact));
     } else {
       this.schedule(windup, impact);
     }
     this.impactAt.set(e.to, Math.max(this.impactAt.get(e.to) ?? 0, this.clock + land));
+  }
+
+  private support(state: GameState, e: GameEvent): void {
+    switch (e.type) {
+      case "heal": {
+        const view = this.views.get(e.to);
+        if (!view) return;
+        this.fx.play("twinkle", view.root.x, view.worldTop + 4, { fps: 18, tint: 0x9effa8 });
+        this.fx.burst(view.root.x, FEET_Y - 6, 8, [0x9effa8, 0xffffff], 30, { gravity: -40, life: 0.8, blend: "add" });
+        this.float(`+${compact(e.amount)}`, view.root.x, view.worldTop - 2, 12, 0x7dff8a);
+        audio.play("heal", 0.3);
+        return;
+      }
+      case "buff": {
+        const view = this.views.get(e.from);
+        if (!view) return;
+        view.attack(false, 0.8);
+        this.fx.play("halo", view.root.x, FEET_Y - 6, { fps: 14, tint: 0xffd23f });
+        this.float(SKILLS[e.skill].name, view.root.x, view.worldTop - 6, 11, 0xffe08a);
+        audio.play("magic", 0.35);
+        return;
+      }
+      case "trap": {
+        const view = this.views.get(e.from);
+        view?.attack(false, 0.8);
+        const front = state.battle.monsters[0];
+        const target = front && this.views.get(front.id);
+        if (target) this.fx.play("ring", target.root.x, FEET_Y, { fps: 12, scale: 0.6, anchorY: 1, tint: 0xd9c7a3 });
+        return;
+      }
+      case "revive": {
+        const view = this.views.get(e.to);
+        if (!view) return;
+        view.revive();
+        this.fx.play("halo", view.root.x, FEET_Y - 6, { fps: 10, tint: 0xfff2a8 });
+        this.fx.burst(view.root.x, FEET_Y - 4, 20, [0xfff2a8, 0xffffff], 50, { gravity: -40, life: 1, blend: "add" });
+        this.float("REVIVED", view.root.x, view.worldTop - 4, 13, 0xfff2a8);
+        audio.play("heal", 0.5, 0.8);
+        return;
+      }
+      case "dot": {
+        const view = this.views.get(e.to);
+        if (view) this.float(compact(e.amount), view.root.x + 4, view.worldTop + 2, 10, STATUS_COLOR[e.status]);
+        return;
+      }
+      case "status": {
+        const view = this.views.get(e.to);
+        if (view && (e.status === "freeze" || e.status === "stun")) this.float(STATUS[e.status].label, view.root.x, view.worldTop - 8, 10, STATUS_COLOR[e.status]);
+        return;
+      }
+      default:
+        return;
+    }
   }
 
   private kill(id: number, gold: number): void {
@@ -540,8 +633,9 @@ export class BattleView {
 
   private updateHud(state: GameState, dt: number): void {
     const battle = state.battle;
-    const info = stageInfo(battle.stage);
-    this.stageText.text = `${ACTS[info.act]!.name} ${info.label}  ·  ${DIFFICULTIES[info.difficulty]}`;
+    const area = areaInfo(battle.location);
+    const contamination = area.plague ? `  ·  contamination ${Math.floor(state.plague.contamination)}` : "";
+    this.stageText.text = area.plague ? `${area.name} ${area.label}${contamination}` : `${area.name} ${area.label}  ·  ${DIFFICULTIES[area.difficulty]}`;
     this.waveDots.clear();
     for (let i = 0; i < battle.waves; i++) {
       const done = i < battle.wave;

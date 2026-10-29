@@ -40,6 +40,7 @@ class Engine {
   private lastNotify = 0;
   private lastSave = 0;
   private noticeId = 0;
+  private scanned = 0;
 
   constructor() {
     const now = Date.now();
@@ -58,7 +59,15 @@ class Engine {
     if (!this.inControl) return;
     const report = advance(this.state, this.clock, now, this.events);
     if (report) this.offline = report;
-    if (this.events.length > EVENT_BUFFER) this.events.splice(0, this.events.length - EVENT_BUFFER);
+    for (let i = this.scanned; i < this.events.length; i++) {
+      const e = this.events[i]!;
+      if (e.type === "notice") this.notice(e.text);
+    }
+    this.scanned = this.events.length;
+    if (this.events.length > EVENT_BUFFER) {
+      this.events.splice(0, this.events.length - EVENT_BUFFER);
+      this.scanned = this.events.length;
+    }
     if (now - this.lastSave >= AUTOSAVE_MS) this.save(now);
     if (now - this.lastNotify >= UI_INTERVAL_MS || report) this.notify(now);
   }
@@ -66,6 +75,7 @@ class Engine {
   drainEvents(): GameEvent[] {
     const out = this.events;
     this.events = [];
+    this.scanned = 0;
     return out;
   }
 
