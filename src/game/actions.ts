@@ -1,100 +1,71 @@
 import { CLASSES } from "./data/classes";
-import { MAX_GRADE, grade } from "./data/grades";
-import { BASES } from "./data/items";
-import { RUNES, runeCost } from "./data/runes";
-import { startStage } from "./combat";
-import { alchemyValue, createItem, itemLevel, synthFee } from "./loot";
-import { rand } from "./rng";
-import { CLASS_KEYS, type ClassKey, type Item, type ItemId, type RuneKey, type Slot } from "./schema";
-import { inventoryCap, modifiers, partySize } from "./stats";
+import { BASES, type Slot } from "./data/items";
+import { RELIQUARIES } from "./data/relics";
+import { RUNES, RUNE_KEYS, runeCost, runeSpent, type RuneKey } from "./data/runes";
+import { SKILLS, TIER_POINTS, classSkills, maxLevel, starterSkill, type SkillKey } from "./data/skills";
+import { PLAGUE_MAX_INTENSITY, PLAGUE_MIN_CONTAMINATION, PLAGUE_SOUL_INTENSITY } from "./data/world";
+import { startBattle } from "./combat";
+import { plagueUnlocked, relicsUnlocked } from "./cube";
+import { createItem, takeMaterial } from "./loot";
+import type { ClassKey, ItemId, RelicId } from "./schema";
+import { inventoryCap, modifiers, partySize, skillSlots, stashCap } from "./stats";
+import { DEPLOY_COOLDOWN_MS } from "./tuning";
 import { fail, ok, type GameState, type Result } from "./types";
 
-function takeFromInventory(state: GameState, ids: readonly ItemId[]): Result<Item[]> {
-  if (new Set(ids).size !== ids.length) return fail("Duplicate items");
-  const items: Item[] = [];
-  for (const id of ids) {
-    const item = state.items[id];
-    if (!item || !state.inventory.includes(id)) return fail("Item is not in the inventory");
-    if (item.locked) return fail("Item is locked");
-    items.push(item);
-  }
-  return ok(items);
-}
-
-function destroy(state: GameState, ids: readonly ItemId[]): void {
-  const gone = new Set<number>(ids);
-  state.inventory = state.inventory.filter((id) => !gone.has(id));
-  for (const id of ids) delete state.items[id];
-}
+const done = ok(undefined);
 
 export function equip(state: GameState, cls: ClassKey, id: ItemId): Result {
   const item = state.items[id];
   const at = state.inventory.indexOf(id);
-  if (!item || at < 0) return fail("Item is not in the inventory");
+  if (!item || at < 0) return fail("Item is not in the bag");
   const base = BASES[item.base];
   if (base.cls && base.cls !== cls) return fail(`Only a ${CLASSES[base.cls].name} can use this`);
   const hero = state.heroes[cls];
+  if (!hero.unlocked) return fail("Recruit this hero first");
   if (hero.level < item.level) return fail(`Requires level ${item.level}`);
   const previous = hero.equipment[base.slot];
   hero.equipment[base.slot] = id;
   state.inventory.splice(at, 1, ...(previous === undefined ? [] : [previous]));
-  return ok(undefined);
+  return done;
 }
 
 export function unequip(state: GameState, cls: ClassKey, slot: Slot): Result {
   const id = state.heroes[cls].equipment[slot];
   if (id === undefined) return fail("Nothing equipped");
-  if (state.inventory.length >= inventoryCap(modifiers(state))) return fail("Inventory is full");
+  if (state.inventory.length >= inventoryCap(modifiers(state))) return fail("Bag is full");
   delete state.heroes[cls].equipment[slot];
   state.inventory.push(id);
-  return ok(undefined);
-}
-
-export function sortInventory(state: GameState): Result {
-  state.inventory.sort((a, b) => state.items[b]!.grade - state.items[a]!.grade || state.items[b]!.level - state.items[a]!.level);
-  return ok(undefined);
+  return done;
 }
 
 export function toggleLock(state: GameState, id: ItemId): Result {
   const item = state.items[id];
   if (!item) return fail("Unknown item");
   item.locked = !item.locked;
-  return ok(undefined);
+  return done;
 }
 
-export function alchemize(state: GameState, ids: readonly ItemId[]): Result<number> {
-  if (ids.length === 0) return fail("Nothing selected");
-  const taken = takeFromInventory(state, ids);
-  if (!taken.ok) return taken;
-  const gold = taken.value.reduce((sum, item) => sum + alchemyValue(item), 0);
-  destroy(state, ids);
-  state.gold += gold;
-  return ok(gold);
+export function sortInventory(state: GameState): Result {
+  state.inventory.sort((a, b) => state.items[b]!.grade - state.items[a]!.grade || state.items[b]!.level - state.items[a]!.level);
+  return done;
 }
 
-export const SYNTH_INPUTS = 9;
+export function stashItem(state: GameState, id: ItemId): Result {
+  const at = state.inventory.indexOf(id);
+  if (at < 0) return fail("Item is not in the bag");
+  if (state.stash.length >= stashCap(modifiers(state))) return fail("Stash is full");
+  state.inventory.splice(at, 1);
+  state.stash.push(id);
+  return done;
+}
 
-export type SynthOutcome = "upgrade" | "jackpot" | "stay";
-
-export function synthesize(state: GameState, ids: readonly ItemId[]): Result<{ item: Item; outcome: SynthOutcome }> {
-  if (ids.length !== SYNTH_INPUTS) return fail(`Needs exactly ${SYNTH_INPUTS} items`);
-  const taken = takeFromInventory(state, ids);
-  if (!taken.ok) return taken;
-  const g = taken.value[0]!.grade;
-  if (taken.value.some((item) => item.grade !== g)) return fail("All items must share a grade");
-  const synth = grade(g).synth;
-  if (!synth) return fail(`${grade(g).name} is the highest grade`);
-  const level = itemLevel(taken.value.reduce((sum, item) => sum + item.level, 0) / SYNTH_INPUTS);
-  const fee = synthFee(g, level);
-  if (state.gold < fee) return fail(`Needs ${fee} gold`);
-  state.gold -= fee;
-  destroy(state, ids);
-  const roll = rand(state);
-  const outcome: SynthOutcome = roll < synth.skip ? "jackpot" : roll < synth.skip + synth.stay ? "stay" : "upgrade";
-  const target = outcome === "jackpot" ? g + 2 : outcome === "stay" ? g : g + 1;
-  const item = createItem(state, level, Math.min(MAX_GRADE, target));
-  state.inventory.push(item.id);
-  return ok({ item, outcome });
+export function unstashItem(state: GameState, id: ItemId): Result {
+  const at = state.stash.indexOf(id);
+  if (at < 0) return fail("Item is not in the stash");
+  if (state.inventory.length >= inventoryCap(modifiers(state))) return fail("Bag is full");
+  state.stash.splice(at, 1);
+  state.inventory.push(id);
+  return done;
 }
 
 export function runeStatus(state: GameState, key: RuneKey): { owned: number; cost: number; maxed: boolean; locked: boolean } {
@@ -114,29 +85,145 @@ export function buyRune(state: GameState, key: RuneKey): Result {
   if (state.gold < status.cost) return fail("Not enough gold");
   state.gold -= status.cost;
   state.runes[key] = status.owned + 1;
-  if (RUNES[key].effect === "partySlot") {
-    const recruit = CLASS_KEYS.find((cls) => !state.party.includes(cls));
-    if (recruit && state.party.length < partySize(modifiers(state))) setParty(state, [...state.party, recruit]);
+  if (RUNES[key].effect === "skillSlot") for (const cls of Object.keys(state.heroes) as ClassKey[]) autoSlot(state, cls);
+  return done;
+}
+
+export function resetRunes(state: GameState): Result<number> {
+  const refund = RUNE_KEYS.reduce((sum, key) => sum + runeSpent(key, state.runes[key] ?? 0), 0);
+  if (refund === 0) return fail("No runes to reset");
+  state.gold += refund;
+  state.runes = {};
+  const size = partySize(modifiers(state));
+  if (state.party.length > size) state.party = state.party.slice(0, size);
+  for (const cls of Object.keys(state.heroes) as ClassKey[]) {
+    const hero = state.heroes[cls];
+    hero.slotted = hero.slotted.slice(0, skillSlots(modifiers(state)));
   }
-  return ok(undefined);
+  startBattle(state, state.location);
+  return ok(refund);
+}
+
+export function recruit(state: GameState, cls: ClassKey): Result {
+  const hero = state.heroes[cls];
+  if (hero.unlocked) return fail("Already recruited");
+  const cost = CLASSES[cls].unlockCost;
+  if (state.gold < cost) return fail(`Needs ${cost} gold`);
+  state.gold -= cost;
+  hero.unlocked = true;
+  const weapon = createItem(state, 1, 0, CLASSES[cls].main);
+  hero.equipment.mainWeapon = weapon.id;
+  const starter = starterSkill(cls);
+  hero.skills[starter] = 1;
+  hero.slotted = [starter];
+  return done;
 }
 
 export function setParty(state: GameState, party: readonly ClassKey[]): Result {
   if (party.length === 0) return fail("The party needs at least one hero");
   if (new Set(party).size !== party.length) return fail("A hero can only appear once");
   if (party.length > partySize(modifiers(state))) return fail("Not enough party slots");
+  if (party.some((cls) => !state.heroes[cls].unlocked)) return fail("Recruit the hero first");
+  const joining = party.some((cls) => !state.party.includes(cls));
+  if (joining && state.time < state.deployReadyAt) return fail(`Deploying again in ${Math.ceil((state.deployReadyAt - state.time) / 1000)}s`);
+  if (joining) state.deployReadyAt = state.time + DEPLOY_COOLDOWN_MS;
   state.party = [...party];
-  startStage(state, state.stage);
-  return ok(undefined);
+  startBattle(state, state.location);
+  return done;
+}
+
+export function skillPoints(state: GameState, cls: ClassKey): { total: number; spent: number; free: number } {
+  const hero = state.heroes[cls];
+  const spent = Object.values(hero.skills).reduce((sum, level) => sum + level, 0);
+  return { total: hero.level, spent, free: hero.level - spent };
+}
+
+export function skillTierOpen(state: GameState, cls: ClassKey, tier: number): boolean {
+  return skillPoints(state, cls).spent >= tier * TIER_POINTS;
+}
+
+export function learnSkill(state: GameState, cls: ClassKey, key: SkillKey): Result {
+  const def = SKILLS[key];
+  if (def.cls !== cls) return fail("That skill belongs to another class");
+  const hero = state.heroes[cls];
+  if (!hero.unlocked) return fail("Recruit this hero first");
+  const level = hero.skills[key] ?? 0;
+  if (level >= maxLevel(key)) return fail("Already at max level");
+  if (skillPoints(state, cls).free <= 0) return fail("No skill points left");
+  if (!skillTierOpen(state, cls, def.tier)) return fail(`Spend ${def.tier * TIER_POINTS} points to open this tier`);
+  hero.skills[key] = level + 1;
+  autoSlot(state, cls);
+  return done;
+}
+
+export function resetSkills(state: GameState, cls: ClassKey): Result {
+  const hero = state.heroes[cls];
+  const starter = starterSkill(cls);
+  hero.skills = { [starter]: 1 };
+  hero.slotted = [starter];
+  return done;
+}
+
+function autoSlot(state: GameState, cls: ClassKey): void {
+  const hero = state.heroes[cls];
+  const slots = skillSlots(modifiers(state));
+  hero.slotted = hero.slotted.filter((k) => hero.skills[k]).slice(0, slots);
+  for (const key of classSkills(cls)) {
+    if (hero.slotted.length >= slots) break;
+    if (SKILLS[key].kind === "active" && hero.skills[key] && !hero.slotted.includes(key)) hero.slotted.push(key);
+  }
+}
+
+export function slotSkill(state: GameState, cls: ClassKey, key: SkillKey, index: number): Result {
+  const hero = state.heroes[cls];
+  if (SKILLS[key].kind !== "active") return fail("Only active skills can be slotted");
+  if (!hero.skills[key]) return fail("Learn the skill first");
+  const slots = skillSlots(modifiers(state));
+  if (index < 0 || index >= slots) return fail("No such skill slot");
+  const next = hero.slotted.filter((k) => k !== key);
+  next.splice(Math.min(index, next.length), 0, key);
+  hero.slotted = next.slice(0, slots);
+  startBattle(state, state.location);
+  return done;
 }
 
 export function travel(state: GameState, stage: number): Result {
   if (stage < 0 || stage > state.unlockedStage) return fail("Stage is locked");
-  startStage(state, stage);
-  return ok(undefined);
+  startBattle(state, { kind: "stage", index: stage });
+  return done;
 }
 
 export function setAutoAdvance(state: GameState, on: boolean): Result {
   state.autoAdvance = on;
-  return ok(undefined);
+  return done;
+}
+
+export function enterPlague(state: GameState, intensity: number, boss: boolean): Result {
+  if (!plagueUnlocked(state)) return fail("Clear Nightmare 1-10 to open the Plaguelands");
+  if (intensity < 1 || intensity > Math.min(PLAGUE_MAX_INTENSITY, state.plague.best + 1)) return fail("Clear the previous intensity first");
+  if (state.plague.contamination < PLAGUE_MIN_CONTAMINATION) return fail(`Needs ${PLAGUE_MIN_CONTAMINATION} contamination to enter`);
+  if (boss) {
+    if (intensity < PLAGUE_SOUL_INTENSITY) return fail(`Contaminated bosses appear from intensity ${PLAGUE_SOUL_INTENSITY}`);
+    if (!takeMaterial(state, "soulPlague")) return fail("Needs a Contaminated Soulstone");
+  }
+  state.plague.intensity = intensity;
+  startBattle(state, { kind: "plague", intensity, boss });
+  return done;
+}
+
+export function leavePlague(state: GameState): Result {
+  if (state.location.kind !== "plague") return fail("Not in the Plaguelands");
+  startBattle(state, { kind: "stage", index: state.lastStage });
+  return done;
+}
+
+export function placeRelic(state: GameState, reliquary: number, slot: number, id: RelicId | null): Result {
+  if (!relicsUnlocked(state)) return fail("Clear the Plaguelands once to unlock relics");
+  const def = RELIQUARIES[reliquary];
+  if (!def || slot < 0 || slot >= def.slots.length) return fail("No such relic slot");
+  if (state.plague.best < def.unlockIntensity) return fail(`Clear intensity ${def.unlockIntensity} to open ${def.name}`);
+  if (id !== null && !state.relics[id]) return fail("Unknown relic");
+  for (const row of state.reliquary) for (let i = 0; i < row.length; i++) if (id !== null && row[i] === id) row[i] = null;
+  state.reliquary[reliquary]![slot] = id;
+  return done;
 }

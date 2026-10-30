@@ -1,42 +1,108 @@
-import type { BaseKey, ClassKey } from "../schema";
 import type { SpriteRef } from "../types";
+import type { BaseKey } from "./items";
+import type { DamageType, StatBlock, StatusKind } from "./stats";
+
+export const CLASS_KEYS = ["knight", "ranger", "mage", "priest", "hunter", "slayer"] as const;
+export type ClassKey = (typeof CLASS_KEYS)[number];
 
 export interface ClassDef {
   name: string;
   role: string;
   sprite: SpriteRef;
-  weapon: BaseKey;
-  base: { hp: number; atk: number; armor: number; atkSpeed: number; critChance: number; critDamage: number };
+  main: BaseKey;
+  sub: BaseKey;
+  damage: DamageType;
+  status: StatusKind | null;
+  ranged: boolean;
   splash: number;
-  skill: { name: string; every: number; mult: number; aoe: boolean };
+  armorCap: number;
+  unlockCost: number;
+  base: { life: number; attack: number; armor: number; attackSpeed: number } & StatBlock;
 }
 
 export const CLASSES: Record<ClassKey, ClassDef> = {
   knight: {
     name: "Knight",
-    role: "Holds the front line",
+    role: "Tank. Holds the front line with shields and stuns.",
     sprite: { sheet: "dungeon", index: 97 },
-    weapon: "sword",
-    base: { hp: 130, atk: 8, armor: 14, atkSpeed: 0.9, critChance: 0.05, critDamage: 0.5 },
+    main: "sword",
+    sub: "shield",
+    damage: "physical",
+    status: "stun",
+    ranged: false,
     splash: 0,
-    skill: { name: "Shield Bash", every: 5, mult: 3, aoe: false },
+    armorCap: 0.85,
+    unlockCost: 0,
+    base: { life: 130, attack: 8, armor: 14, attackSpeed: 0.9, critChance: 0.05, critDamage: 0.4, block: 0.1 },
   },
   ranger: {
     name: "Ranger",
-    role: "Fast shots, frequent crits",
+    role: "Bow damage. Fast shots and frequent crits.",
     sprite: { sheet: "dungeon", index: 112 },
-    weapon: "bow",
-    base: { hp: 75, atk: 9, armor: 5, atkSpeed: 1.3, critChance: 0.15, critDamage: 0.8 },
+    main: "bow",
+    sub: "quiver",
+    damage: "physical",
+    status: "bleed",
+    ranged: true,
     splash: 0,
-    skill: { name: "Volley", every: 4, mult: 1.3, aoe: true },
+    armorCap: 0.75,
+    unlockCost: 150,
+    base: { life: 75, attack: 9, armor: 5, attackSpeed: 1.3, critChance: 0.15, critDamage: 0.8, dodge: 0.08 },
   },
   mage: {
-    name: "Mage",
-    role: "Splash damage to the whole wave",
+    name: "Sorcerer",
+    role: "Elemental area damage that burns, freezes and shocks.",
     sprite: { sheet: "dungeon", index: 84 },
-    weapon: "staff",
-    base: { hp: 65, atk: 14, armor: 3, atkSpeed: 0.7, critChance: 0.06, critDamage: 0.6 },
+    main: "staff",
+    sub: "orb",
+    damage: "fire",
+    status: "ignite",
+    ranged: true,
     splash: 0.35,
-    skill: { name: "Meteor", every: 6, mult: 3, aoe: true },
+    armorCap: 0.75,
+    unlockCost: 150,
+    base: { life: 65, attack: 14, armor: 3, attackSpeed: 0.7, critChance: 0.06, critDamage: 0.6 },
+  },
+  priest: {
+    name: "Priest",
+    role: "Heals, blessings and resurrection.",
+    sprite: { sheet: "dungeon", index: 100 },
+    main: "scepter",
+    sub: "tome",
+    damage: "lightning",
+    status: "shock",
+    ranged: true,
+    splash: 0,
+    armorCap: 0.85,
+    unlockCost: 1_500,
+    base: { life: 95, attack: 8, armor: 10, attackSpeed: 0.9, critChance: 0.04, critDamage: 0.5, healPower: 0 },
+  },
+  hunter: {
+    name: "Hunter",
+    role: "Crossbow and traps that hit whole waves.",
+    sprite: { sheet: "dungeon", index: 87 },
+    main: "crossbow",
+    sub: "bolts",
+    damage: "physical",
+    status: "bleed",
+    ranged: true,
+    splash: 0,
+    armorCap: 0.75,
+    unlockCost: 8_000,
+    base: { life: 80, attack: 10, armor: 6, attackSpeed: 1, critChance: 0.1, critDamage: 0.7, dodge: 0.05 },
+  },
+  slayer: {
+    name: "Slayer",
+    role: "Melee burst that heals from every hit.",
+    sprite: { sheet: "dungeon", index: 88 },
+    main: "axe",
+    sub: "hatchet",
+    damage: "physical",
+    status: "bleed",
+    ranged: false,
+    splash: 0,
+    armorCap: 0.85,
+    unlockCost: 30_000,
+    base: { life: 115, attack: 11, armor: 12, attackSpeed: 0.85, critChance: 0.08, critDamage: 1, leech: 0.03 },
   },
 };

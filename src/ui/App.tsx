@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { runeStatus } from "../game/actions";
-import { ACTS, DIFFICULTIES, stageInfo } from "../game/data/world";
+import { runeStatus, skillPoints } from "../game/actions";
+import { CLASS_KEYS } from "../game/data/classes";
+import { DIFFICULTIES, areaInfo } from "../game/data/world";
 import { RUNE_KEYS, type ClassKey } from "../game/schema";
 import { engine, useGame } from "./engine";
 import { compact, duration } from "./format";
@@ -8,14 +9,16 @@ import { Icon } from "./items";
 import { BagPanel } from "./panels/Bag";
 import { CubePanel } from "./panels/Cube";
 import { MapPanel } from "./panels/Map";
-import { PartyPanel } from "./panels/Party";
+import { HeroesPanel } from "./panels/Heroes";
+import { RelicsPanel } from "./panels/Relics";
+import { SkillsPanel } from "./panels/Skills";
 import { PetsPanel } from "./panels/Pets";
 import { RunesPanel } from "./panels/Runes";
 import { Strip, openNextChest } from "./Strip";
 
-const TABS = ["party", "bag", "cube", "runes", "map", "pets"] as const;
+const TABS = ["heroes", "skills", "bag", "cube", "runes", "map", "relics", "pets"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABEL: Record<Tab, string> = { party: "Party", bag: "Bag", cube: "Cube", runes: "Runes", map: "Map", pets: "Pets" };
+const TAB_LABEL: Record<Tab, string> = { heroes: "Heroes", skills: "Skills", bag: "Bag", cube: "Cube", runes: "Runes", map: "Map", relics: "Relics", pets: "Pets" };
 
 function OtherTab() {
   useGame();
@@ -61,9 +64,10 @@ function OfflineReport() {
 
 export function App() {
   const state = useGame();
-  const [tab, setTab] = useState<Tab>("party");
+  const [tab, setTab] = useState<Tab>("heroes");
   const [selected, setSelected] = useState<ClassKey>(state.party[0] ?? "knight");
-  const info = stageInfo(state.stage);
+  const area = areaInfo(state.location);
+  const skillsReady = CLASS_KEYS.some((c) => state.heroes[c].unlocked && skillPoints(state, c).free > 0);
   const runeReady = RUNE_KEYS.some((k) => {
     const s = runeStatus(state, k);
     return !s.locked && !s.maxed && s.cost <= state.gold;
@@ -81,7 +85,7 @@ export function App() {
             <Icon sprite={{ sheet: "dungeon", index: 89 }} /> {state.chests.length}
           </button>
           <span className="resource muted">
-            {DIFFICULTIES[info.difficulty]} · {ACTS[info.act]!.name} {info.label}
+            {area.plague ? `${area.name} · ${area.label}` : `${DIFFICULTIES[area.difficulty]} · ${area.name} ${area.label}`}
           </span>
         </div>
       </header>
@@ -92,15 +96,18 @@ export function App() {
             {TAB_LABEL[t]}
             {t === "bag" && state.chests.length > 0 && <span className="badge">{state.chests.length}</span>}
             {t === "runes" && runeReady && <span className="dot" />}
+            {t === "skills" && skillsReady && <span className="dot" />}
           </button>
         ))}
       </nav>
       <main className="panel">
-        {tab === "party" && <PartyPanel selected={selected} onSelect={setSelected} />}
-        {tab === "bag" && <BagPanel selected={selected} />}
+        {tab === "heroes" && <HeroesPanel selected={selected} onSelect={setSelected} />}
+        {tab === "skills" && <SkillsPanel selected={selected} onSelect={setSelected} />}
+        {tab === "bag" && <BagPanel />}
         {tab === "cube" && <CubePanel />}
         {tab === "runes" && <RunesPanel />}
         {tab === "map" && <MapPanel />}
+        {tab === "relics" && <RelicsPanel />}
         {tab === "pets" && <PetsPanel />}
       </main>
       <footer className="footer muted">

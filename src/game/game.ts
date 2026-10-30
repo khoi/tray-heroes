@@ -1,40 +1,59 @@
-import { grantXp, newBattle, step, startStage } from "./combat";
+import { CLASSES, CLASS_KEYS } from "./data/classes";
+import { starterSkill } from "./data/skills";
+import { PLAGUE_MAX_CONTAMINATION, PLAGUE_REFILL_PER_S } from "./data/world";
+import { grantXp, newBattle, startBattle, step } from "./combat";
 import { createItem } from "./loot";
-import { CLASS_KEYS, type Hero, type Save } from "./schema";
+import type { ClassKey, Hero, Save } from "./schema";
 import { modifiers } from "./stats";
 import { MAX_CATCHUP_MS, STEP_MS } from "./tuning";
 import type { GameEvent, GameState } from "./types";
 
+export function blankHero(unlocked: boolean): Hero {
+  return { unlocked, level: 1, xp: 0, equipment: {}, skills: {}, slotted: [] };
+}
+
 export function newGame(seed: number, now: number): GameState {
   const save: Save = {
-    version: 1,
+    version: 2,
     savedAt: now,
     rng: seed | 0,
     time: 0,
     gold: 0,
     items: {},
     inventory: [],
+    stash: [],
     nextItemId: 1,
-    heroes: Object.fromEntries(CLASS_KEYS.map((cls) => [cls, { level: 1, xp: 0, equipment: {} } satisfies Hero])) as Save["heroes"],
+    materials: {},
+    heroes: Object.fromEntries(CLASS_KEYS.map((cls) => [cls, blankHero(cls === "knight")])) as Record<ClassKey, Hero>,
     party: ["knight"],
+    deployReadyAt: 0,
     runes: {},
     kills: {},
     chests: [
-      { kind: "common", level: 1 },
-      { kind: "common", level: 1 },
+      { kind: "common", level: 1, cap: 6, difficulty: 0, plague: false },
+      { kind: "common", level: 1, cap: 6, difficulty: 0, plague: false },
     ],
     chestReadyAt: { common: 0, boss: 0, act: 0 },
     autoOpenAt: 0,
     unlockedStage: 0,
-    stage: 0,
+    location: { kind: "stage", index: 0 },
+    lastStage: 0,
     autoAdvance: true,
+    cube: { level: 1, xp: 0 },
+    plague: { contamination: PLAGUE_MAX_CONTAMINATION, best: 0, intensity: 1 },
+    relics: {},
+    reliquary: [
+      [null, null, null],
+      [null, null, null],
+      [null, null, null],
+    ],
     rates: { gold: 0, xp: 0, windowGold: 0, windowXp: 0, windowStart: 0 },
   };
-  for (const cls of CLASS_KEYS) {
-    const weapon = createItem(save, 1, 0, cls === "knight" ? "sword" : cls === "ranger" ? "bow" : "staff");
-    save.heroes[cls].equipment.weapon = weapon.id;
-  }
-  return { ...save, battle: newBattle(save, 0, 100) };
+  const knight = save.heroes.knight;
+  knight.equipment.mainWeapon = createItem(save, 1, 0, CLASSES.knight.main).id;
+  knight.skills[starterSkill("knight")] = 1;
+  knight.slotted = [starterSkill("knight")];
+  return { ...save, battle: newBattle(save, save.location, 100) };
 }
 
 export interface OfflineReport {
@@ -53,7 +72,8 @@ export function applyOffline(state: GameState, elapsedMs: number): OfflineReport
   const events: GameEvent[] = [];
   state.gold += gold;
   for (const cls of state.party) grantXp(state, cls, xp, events);
-  startStage(state, state.stage);
+  state.plague.contamination = Math.min(PLAGUE_MAX_CONTAMINATION, state.plague.contamination + (PLAGUE_REFILL_PER_S * elapsedMs) / 1000);
+  startBattle(state, state.location.kind === "plague" ? { kind: "stage", index: state.lastStage } : state.location);
   return { elapsedMs, creditedMs, gold, xp, levels: events.length };
 }
 

@@ -1,58 +1,136 @@
-import type { RuneKey } from "../schema";
+import type { StatKey } from "./stats";
 
-export const MOD_KEYS = [
-  "atkPct",
-  "hpPct",
-  "armorPct",
-  "critChance",
-  "critDamage",
-  "gold",
-  "xp",
+export const UTILITY_KEYS = [
   "commonChest",
   "bossChest",
   "chestInterval",
   "inventory",
+  "stash",
   "partySlot",
-  "autoOpen",
+  "skillSlot",
+  "autoOpenCommon",
+  "autoOpenBoss",
+  "autoOpenAct",
+  "autoOpenSpeed",
   "offlineHours",
   "fewerWaves",
+  "alchemyGold",
+  "materialDrop",
+  "soulDrop",
+  "cubeXp",
 ] as const;
 
-export type ModKey = (typeof MOD_KEYS)[number];
+export type UtilityKey = (typeof UTILITY_KEYS)[number];
+export type ModKey = StatKey | UtilityKey;
+
+export type Branch = "heroes" | "gold" | "wisdom" | "storage" | "treasure" | "combat";
+
+export const BRANCHES: Record<Branch, { name: string; angle: number }> = {
+  heroes: { name: "Heroes", angle: 90 },
+  wisdom: { name: "Wisdom", angle: 150 },
+  gold: { name: "Gold", angle: 210 },
+  storage: { name: "Storage", angle: 270 },
+  treasure: { name: "Treasure", angle: 330 },
+  combat: { name: "Combat", angle: 30 },
+};
 
 export interface RuneDef {
   name: string;
+  branch: Branch;
+  depth: number;
+  side: -1 | 0 | 1;
   effect: ModKey;
   per: number;
   max: number;
   cost: number;
   growth: number;
   requires: RuneKey[];
-  x: number;
-  y: number;
 }
 
-export const RUNES: Record<RuneKey, RuneDef> = {
-  might: { name: "Might", effect: "atkPct", per: 0.1, max: 50, cost: 40, growth: 1.42, requires: [], x: 0, y: -1 },
-  vigor: { name: "Vigor", effect: "hpPct", per: 0.1, max: 50, cost: 40, growth: 1.42, requires: [], x: -1, y: 0 },
-  greed: { name: "Greed", effect: "gold", per: 0.1, max: 50, cost: 60, growth: 1.42, requires: [], x: 1, y: 0 },
-  wisdom: { name: "Wisdom", effect: "xp", per: 0.1, max: 50, cost: 60, growth: 1.42, requires: [], x: 0, y: 1 },
-  precision: { name: "Precision", effect: "critChance", per: 0.01, max: 15, cost: 300, growth: 1.6, requires: ["might"], x: 0.7, y: -2 },
-  ferocity: { name: "Ferocity", effect: "critDamage", per: 0.1, max: 15, cost: 500, growth: 1.6, requires: ["precision"], x: 1.4, y: -3 },
-  fellowship1: { name: "Fellowship", effect: "partySlot", per: 1, max: 1, cost: 250, growth: 1, requires: ["might"], x: -0.7, y: -2 },
-  fellowship2: { name: "Fellowship II", effect: "partySlot", per: 1, max: 1, cost: 12_000, growth: 1, requires: ["fellowship1"], x: -1.4, y: -3 },
-  bulwark: { name: "Bulwark", effect: "armorPct", per: 0.1, max: 40, cost: 150, growth: 1.45, requires: ["vigor"], x: -2, y: 0.7 },
-  repose: { name: "Repose", effect: "offlineHours", per: 2, max: 1, cost: 100, growth: 1, requires: ["vigor"], x: -2, y: -0.7 },
-  longRepose: { name: "Long Repose", effect: "offlineHours", per: 1, max: 6, cost: 3_000, growth: 1.8, requires: ["repose"], x: -3, y: -1.4 },
-  fortune: { name: "Fortune", effect: "commonChest", per: 0.15, max: 10, cost: 200, growth: 1.5, requires: ["greed"], x: 2, y: -0.7 },
-  treasure: { name: "Treasure Sense", effect: "bossChest", per: 0.1, max: 10, cost: 1_500, growth: 1.5, requires: ["fortune"], x: 3, y: -1.4 },
-  haste: { name: "Haste", effect: "chestInterval", per: 3_000, max: 8, cost: 800, growth: 1.6, requires: ["greed"], x: 2, y: 0.7 },
-  mainspring: { name: "Mainspring", effect: "autoOpen", per: 1, max: 1, cost: 1_200, growth: 1, requires: ["haste"], x: 3, y: 1.4 },
-  satchel: { name: "Satchel", effect: "inventory", per: 6, max: 8, cost: 150, growth: 1.7, requires: ["wisdom"], x: 0.7, y: 2 },
-  brevity: { name: "Brevity", effect: "fewerWaves", per: 1, max: 2, cost: 250_000, growth: 6, requires: ["satchel"], x: 1.4, y: 3 },
+const r = (name: string, branch: Branch, depth: number, side: -1 | 0 | 1, effect: ModKey, per: number, max: number, cost: number, growth: number, requires: string[]) =>
+  ({ name, branch, depth, side, effect, per, max, cost, growth, requires }) as Omit<RuneDef, "requires"> & { requires: string[] };
+
+const DEFS = {
+  command1: r("Command I", "heroes", 1, 0, "partySlot", 1, 1, 1_000, 1, []),
+  drill: r("Drill", "heroes", 2, -1, "xpFind", 0.04, 10, 600, 1.45, ["command1"]),
+  awakening1: r("Awakening I", "heroes", 2, 0, "skillSlot", 1, 1, 50_000, 1, ["command1"]),
+  fortitude: r("Fortitude", "heroes", 2, 1, "lifePct", 0.05, 25, 400, 1.42, ["command1"]),
+  command2: r("Command II", "heroes", 3, 0, "partySlot", 1, 1, 150_000, 1, ["awakening1"]),
+  tactics: r("Tactics", "heroes", 3, -1, "cooldown", 0.02, 10, 25_000, 1.5, ["awakening1"]),
+  rally: r("Rally", "heroes", 3, 1, "moveSpeed", 0.04, 10, 15_000, 1.45, ["awakening1"]),
+  awakening2: r("Awakening II", "heroes", 4, 0, "skillSlot", 1, 1, 5_000_000, 1, ["command2"]),
+  legend: r("Legend", "heroes", 5, 0, "attackPct", 0.05, 20, 2_000_000, 1.5, ["awakening2"]),
+
+  wisdom: r("Wisdom", "wisdom", 1, 0, "xpFind", 0.05, 25, 60, 1.42, []),
+  repose: r("Repose", "wisdom", 2, -1, "offlineHours", 2, 1, 100, 1, ["wisdom"]),
+  study: r("Study", "wisdom", 2, 0, "xpFind", 0.06, 20, 5_000, 1.45, ["wisdom"]),
+  cubeLore: r("Cube Lore", "wisdom", 2, 1, "cubeXp", 0.1, 10, 2_000, 1.5, ["wisdom"]),
+  longRepose: r("Long Repose", "wisdom", 3, -1, "offlineHours", 1, 6, 3_000, 1.8, ["repose"]),
+  scholar: r("Scholar", "wisdom", 3, 0, "xpFind", 0.08, 15, 250_000, 1.5, ["study"]),
+  artisan: r("Artisan", "wisdom", 3, 1, "cubeXp", 0.15, 10, 80_000, 1.6, ["cubeLore"]),
+
+  greed: r("Greed", "gold", 1, 0, "goldFind", 0.05, 25, 60, 1.42, []),
+  alchemist: r("Alchemist", "gold", 2, -1, "alchemyGold", 0.1, 15, 800, 1.5, ["greed"]),
+  prosperity: r("Prosperity", "gold", 2, 0, "goldFind", 0.06, 20, 5_000, 1.45, ["greed"]),
+  midas: r("Midas", "gold", 3, 0, "goldFind", 0.08, 15, 250_000, 1.5, ["prosperity"]),
+  transmuter: r("Transmuter", "gold", 3, -1, "alchemyGold", 0.15, 10, 60_000, 1.6, ["alchemist"]),
+  hoarder: r("Hoarder", "gold", 4, 0, "goldFind", 0.1, 10, 8_000_000, 1.6, ["midas"]),
+
+  expansion1: r("Expansion I", "storage", 1, 0, "inventory", 6, 4, 150, 1.8, []),
+  mainspring1: r("Mainspring I", "storage", 2, -1, "autoOpenCommon", 1, 1, 1_200, 1, ["expansion1"]),
+  vault1: r("Vault I", "storage", 2, 1, "stash", 1, 1, 5_000, 1, ["expansion1"]),
+  expansion2: r("Expansion II", "storage", 2, 0, "inventory", 6, 4, 20_000, 1.8, ["expansion1"]),
+  lubrication: r("Lubrication", "storage", 3, -1, "autoOpenSpeed", 1, 5, 5_000, 1.7, ["mainspring1"]),
+  mainspring2: r("Mainspring II", "storage", 3, 0, "autoOpenBoss", 1, 1, 100_000, 1, ["mainspring1", "expansion2"]),
+  vault2: r("Vault II", "storage", 3, 1, "stash", 1, 1, 250_000, 1, ["vault1"]),
+  expansion3: r("Expansion III", "storage", 4, 1, "inventory", 6, 4, 1_000_000, 1.8, ["expansion2"]),
+  mainspring3: r("Mainspring III", "storage", 4, 0, "autoOpenAct", 1, 1, 1_000_000, 1, ["mainspring2"]),
+  vault3: r("Vault III", "storage", 5, 1, "stash", 1, 1, 50_000_000, 1, ["vault2", "expansion3"]),
+
+  exploration: r("Exploration", "treasure", 1, 0, "commonChest", 0.2, 5, 500, 1.6, []),
+  haste: r("Haste", "treasure", 2, -1, "chestInterval", 3_000, 8, 800, 1.6, ["exploration"]),
+  treasureSense: r("Treasure Sense", "treasure", 2, 0, "bossChest", 0.1, 10, 1_500, 1.5, ["exploration"]),
+  scavenger: r("Scavenger", "treasure", 2, 1, "materialDrop", 0.1, 10, 2_000, 1.5, ["exploration"]),
+  soulseeker: r("Soulseeker", "treasure", 3, 1, "soulDrop", 0.15, 10, 40_000, 1.55, ["scavenger"]),
+  bounty: r("Bounty", "treasure", 3, 0, "bossChest", 0.15, 10, 120_000, 1.55, ["treasureSense"]),
+  brevity: r("Brevity", "treasure", 4, 0, "fewerWaves", 1, 2, 20_000_000, 6, ["bounty", "haste"]),
+
+  might: r("Might", "combat", 1, 0, "attackPct", 0.1, 50, 40, 1.42, []),
+  vigor: r("Vigor", "combat", 2, -1, "lifePct", 0.1, 50, 40, 1.42, ["might"]),
+  precision: r("Precision", "combat", 2, 0, "critChance", 0.01, 15, 300, 1.6, ["might"]),
+  swiftness: r("Swiftness", "combat", 2, 1, "attackSpeed", 0.02, 10, 1_000, 1.6, ["might"]),
+  bulwark: r("Bulwark", "combat", 3, -1, "armorPct", 0.1, 40, 150, 1.45, ["vigor"]),
+  ferocity: r("Ferocity", "combat", 3, 0, "critDamage", 0.1, 15, 500, 1.6, ["precision"]),
+  evasion: r("Evasion", "combat", 3, 1, "dodge", 0.01, 10, 8_000, 1.6, ["swiftness"]),
+  warding: r("Warding", "combat", 4, -1, "allRes", 0.02, 15, 20_000, 1.55, ["bulwark"]),
+  vengeance: r("Vengeance", "combat", 4, 0, "bossDmg", 0.05, 15, 30_000, 1.55, ["ferocity"]),
+  aegis: r("Aegis", "combat", 4, 1, "block", 0.01, 10, 30_000, 1.6, ["evasion"]),
+  sanguine: r("Sanguine", "combat", 5, 0, "leech", 0.005, 6, 500_000, 1.8, ["vengeance"]),
+  elementalist: r("Elementalist", "combat", 5, -1, "maxRes", 0.01, 5, 2_000_000, 2, ["warding"]),
 };
 
+export type RuneKey = keyof typeof DEFS;
+export const RUNES = DEFS as Record<RuneKey, RuneDef>;
+export const RUNE_KEYS = Object.keys(RUNES) as RuneKey[];
+
 export function runeCost(key: RuneKey, owned: number): number {
-  const r = RUNES[key];
-  return Math.round(r.cost * Math.pow(r.growth, owned));
+  const rune = RUNES[key];
+  return Math.round(rune.cost * Math.pow(rune.growth, owned));
+}
+
+export function runeSpent(key: RuneKey, owned: number): number {
+  let total = 0;
+  for (let i = 0; i < owned; i++) total += runeCost(key, i);
+  return total;
+}
+
+export function runePosition(key: RuneKey): { x: number; y: number } {
+  const rune = RUNES[key];
+  const angle = (BRANCHES[rune.branch].angle * Math.PI) / 180;
+  const radius = rune.depth * 1.15 + 0.35;
+  const spread = rune.side * 0.85;
+  return {
+    x: Math.cos(angle) * radius - Math.sin(angle) * spread,
+    y: -Math.sin(angle) * radius - Math.cos(angle) * spread,
+  };
 }

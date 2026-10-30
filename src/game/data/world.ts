@@ -1,5 +1,31 @@
-import type { MonsterKey } from "../schema";
 import type { SpriteRef } from "../types";
+import type { PartKey } from "./materials";
+import type { DamageType, StatusKind } from "./stats";
+
+export const MONSTER_KEYS = [
+  "goblin",
+  "mushroom",
+  "snake",
+  "wolf",
+  "bat",
+  "orc",
+  "troll",
+  "skeleton",
+  "zombie",
+  "scorpion",
+  "cobra",
+  "mummy",
+  "reaper",
+  "vampire",
+  "yeti",
+  "frost",
+  "flame",
+  "imp",
+  "skull",
+  "demon",
+  "dragon",
+] as const;
+export type MonsterKey = (typeof MONSTER_KEYS)[number];
 
 export interface MonsterDef {
   name: string;
@@ -7,35 +33,50 @@ export interface MonsterDef {
   hp: number;
   dmg: number;
   interval: number;
+  type: DamageType;
+  status: StatusKind | null;
+  part: PartKey;
+  ranged: boolean;
 }
 
 const c = (index: number): SpriteRef => ({ sheet: "creatures", index });
+const m = (name: string, sprite: SpriteRef, hp: number, dmg: number, interval: number, type: DamageType, status: StatusKind | null, part: PartKey, ranged = false): MonsterDef => ({
+  name,
+  sprite,
+  hp,
+  dmg,
+  interval,
+  type,
+  status,
+  part,
+  ranged,
+});
 
 export const MONSTERS: Record<MonsterKey, MonsterDef> = {
-  goblin: { name: "Goblin", sprite: c(10), hp: 1, dmg: 1, interval: 1.4 },
-  mushroom: { name: "Bog Slime", sprite: c(13), hp: 1.3, dmg: 0.7, interval: 1.6 },
-  snake: { name: "Slugling", sprite: c(40), hp: 0.8, dmg: 1.2, interval: 1.2 },
-  wolf: { name: "Orc Warrior", sprite: c(23), hp: 1.1, dmg: 1.1, interval: 1.1 },
-  bat: { name: "Bat", sprite: { sheet: "dungeon", index: 120 }, hp: 0.7, dmg: 0.9, interval: 0.9 },
-  orc: { name: "Masked Orc", sprite: c(11), hp: 1.2, dmg: 1.2, interval: 1.5 },
-  troll: { name: "Ogre Chief", sprite: c(42), hp: 1.3, dmg: 1.1, interval: 1.8 },
-  skeleton: { name: "Skeleton", sprite: c(1), hp: 0.9, dmg: 1.1, interval: 1.3 },
-  zombie: { name: "Zombie", sprite: c(0), hp: 1.4, dmg: 0.9, interval: 1.7 },
-  scorpion: { name: "Mud Golem", sprite: c(145), hp: 1, dmg: 1.2, interval: 1.2 },
-  cobra: { name: "Sand Slug", sprite: c(41), hp: 0.8, dmg: 1.3, interval: 1.1 },
-  mummy: { name: "Ghoul", sprite: c(95), hp: 1.2, dmg: 1, interval: 1.4 },
-  reaper: { name: "Necromancer", sprite: c(4), hp: 1.1, dmg: 1.3, interval: 1.4 },
-  vampire: { name: "Plague Giant", sprite: c(2), hp: 1.3, dmg: 1.2, interval: 1.5 },
-  yeti: { name: "Frost Ghoul", sprite: c(43), hp: 1.4, dmg: 1, interval: 1.6 },
-  frost: { name: "Fallen Angel", sprite: c(49), hp: 0.9, dmg: 1.2, interval: 1.2 },
-  flame: { name: "Chort", sprite: c(45), hp: 0.9, dmg: 1.3, interval: 1.2 },
-  imp: { name: "Imp", sprite: c(39), hp: 0.8, dmg: 1.1, interval: 0.9 },
-  skull: { name: "Wogol", sprite: c(3), hp: 1, dmg: 1.2, interval: 1.3 },
-  demon: { name: "Orc Shaman", sprite: c(38), hp: 1.2, dmg: 1.3, interval: 1.5 },
-  dragon: { name: "Pit Lord", sprite: c(33), hp: 1.4, dmg: 1.3, interval: 1.6 },
+  goblin: m("Goblin", c(10), 1, 1, 1.4, "physical", null, "wildFang"),
+  mushroom: m("Bog Slime", c(13), 1.3, 0.7, 1.6, "chaos", "poison", "bogGel"),
+  snake: m("Slugling", c(40), 0.8, 1.2, 1.2, "chaos", "poison", "bogGel"),
+  wolf: m("Orc Warrior", c(23), 1.1, 1.1, 1.1, "physical", "bleed", "wildFang"),
+  bat: m("Bat", { sheet: "dungeon", index: 120 }, 0.7, 0.9, 0.9, "physical", null, "wildFang"),
+  orc: m("Masked Orc", c(11), 1.2, 1.2, 1.5, "physical", "stun", "titanHeart"),
+  troll: m("Ogre Chief", c(42), 1.3, 1.1, 1.8, "physical", "stun", "titanHeart"),
+  skeleton: m("Skeleton", c(1), 0.9, 1.1, 1.3, "physical", null, "boneShard"),
+  zombie: m("Zombie", c(0), 1.4, 0.9, 1.7, "chaos", "poison", "graveDust"),
+  scorpion: m("Mud Golem", c(145), 1, 1.2, 1.2, "physical", null, "boneShard", true),
+  cobra: m("Sand Slug", c(41), 0.8, 1.3, 1.1, "chaos", "poison", "graveDust"),
+  mummy: m("Ghoul", c(95), 1.2, 1, 1.4, "physical", "bleed", "graveDust"),
+  reaper: m("Necromancer", c(4), 1.1, 1.3, 1.4, "chaos", null, "graveDust", true),
+  vampire: m("Plague Giant", c(2), 1.3, 1.2, 1.5, "chaos", "poison", "titanHeart"),
+  yeti: m("Frost Ghoul", c(43), 1.4, 1, 1.6, "cold", "chill", "frostCore"),
+  frost: m("Fallen Angel", c(49), 0.9, 1.2, 1.2, "lightning", "shock", "stormGland"),
+  flame: m("Chort", c(45), 0.9, 1.3, 1.2, "fire", "ignite", "demonHorn"),
+  imp: m("Imp", c(39), 0.8, 1.1, 0.9, "fire", "ignite", "demonHorn"),
+  skull: m("Wogol", c(3), 1, 1.2, 1.3, "lightning", "shock", "stormGland"),
+  demon: m("Orc Shaman", c(38), 1.2, 1.3, 1.5, "fire", "ignite", "demonHorn"),
+  dragon: m("Pit Lord", c(33), 1.4, 1.3, 1.6, "fire", "ignite", "titanHeart"),
 };
 
-export type Theme = "forest" | "desert" | "ember";
+export type Theme = "forest" | "desert" | "ember" | "plague";
 
 export interface ActDef {
   name: string;
@@ -52,10 +93,39 @@ export const ACTS: readonly ActDef[] = [
 ];
 
 export const DIFFICULTIES = ["Normal", "Nightmare", "Hell", "Torment"] as const;
+export const RES_PENALTY = [0, 0.2, 0.4, 0.6] as const;
 
 export const STAGES_PER_ACT = 10;
 export const STAGES_PER_DIFFICULTY = ACTS.length * STAGES_PER_ACT;
 export const STAGE_COUNT = DIFFICULTIES.length * STAGES_PER_DIFFICULTY;
+
+export const PLAGUE_UNLOCK_STAGE = STAGES_PER_DIFFICULTY + STAGES_PER_ACT - 1;
+export const PLAGUE_MIN_CONTAMINATION = 30;
+export const PLAGUE_MAX_CONTAMINATION = 100;
+export const PLAGUE_DRAIN_PER_S = 0.5;
+export const PLAGUE_REFILL_PER_S = 1 / 30;
+export const PLAGUE_SOUL_INTENSITY = 6;
+export const PLAGUE_MAX_INTENSITY = 20;
+
+export type Location = { kind: "stage"; index: number } | { kind: "plague"; intensity: number; boss: boolean };
+
+export interface AreaInfo {
+  location: Location;
+  name: string;
+  label: string;
+  theme: Theme;
+  level: number;
+  difficulty: number;
+  act: number;
+  pool: MonsterKey[];
+  stageBoss: MonsterKey;
+  actBoss: MonsterKey;
+  isActBoss: boolean;
+  resPenalty: number;
+  power: number;
+  waves: number;
+  plague: boolean;
+}
 
 export interface StageInfo {
   index: number;
@@ -82,8 +152,47 @@ export function stageInfo(index: number): StageInfo {
   };
 }
 
-export function actOf(index: number): ActDef {
-  const act = ACTS[stageInfo(index).act];
-  if (!act) throw new Error(`no act for stage ${index}`);
-  return act;
+const ALL_POOL = ACTS.flatMap((a) => a.pool);
+
+export function areaInfo(location: Location): AreaInfo {
+  if (location.kind === "plague") {
+    const t = location.intensity;
+    const act = ACTS[t % ACTS.length]!;
+    return {
+      location,
+      name: location.boss ? "Contaminated Lair" : "Plaguelands",
+      label: `Intensity ${t}`,
+      theme: "plague",
+      level: Math.min(100, 50 + t * 3),
+      difficulty: Math.min(3, 1 + Math.floor(t / 6)),
+      act: t % ACTS.length,
+      pool: ALL_POOL,
+      stageBoss: act.stageBoss,
+      actBoss: act.actBoss,
+      isActBoss: location.boss,
+      resPenalty: Math.min(0.75, 0.3 + t * 0.02),
+      power: 1 + t * 0.12,
+      waves: location.boss ? 3 : 6,
+      plague: true,
+    };
+  }
+  const info = stageInfo(location.index);
+  const act = ACTS[info.act]!;
+  return {
+    location,
+    name: act.name,
+    label: info.label,
+    theme: act.theme,
+    level: info.level,
+    difficulty: info.difficulty,
+    act: info.act,
+    pool: act.pool,
+    stageBoss: act.stageBoss,
+    actBoss: act.actBoss,
+    isActBoss: info.isActBoss,
+    resPenalty: RES_PENALTY[info.difficulty] ?? 0,
+    power: 1,
+    waves: info.isActBoss ? 3 : 4 + Math.floor(info.num / 2),
+    plague: false,
+  };
 }

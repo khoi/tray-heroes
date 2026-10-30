@@ -1,17 +1,10 @@
-import { MONSTERS } from "../../game/data/world";
 import { PETS } from "../../game/data/pets";
+import { MONSTERS } from "../../game/data/world";
+import { describe } from "./Runes";
 import { useGame } from "../engine";
-import { compact, percent } from "../format";
+import { compact } from "../format";
 import { Icon } from "../items";
-
-const BONUS: Record<(typeof PETS)[number]["bonus"], string> = {
-  xp: "experience",
-  gold: "gold",
-  commonChest: "chest drop chance",
-  bossChest: "boss chest chance",
-  hpPct: "life",
-  atkPct: "attack",
-};
+import "./pets.css";
 
 export function PetsPanel() {
   const state = useGame();
@@ -26,7 +19,7 @@ export function PetsPanel() {
             <Icon sprite={pet.sprite} scale={3} className={done ? "" : "silhouette"} />
             <div>
               <h4>
-                {pet.name} <span className="muted">+{percent(pet.amount)} {BONUS[pet.bonus]}</span>
+                {pet.name} <span className="muted">{describe(pet.bonus, pet.amount)}</span>
               </h4>
               <div className="muted">
                 Defeat {compact(pet.kills)} {MONSTERS[pet.hunt].name}s: {compact(Math.min(kills, pet.kills))}/{compact(pet.kills)}

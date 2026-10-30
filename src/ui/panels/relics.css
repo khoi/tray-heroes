@@ -1,0 +1,62 @@
+/* Relics */
+
+.reliquaries {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.reliquary {
+  background: var(--panel-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.reliquary.closed {
+  opacity: 0.55;
+}
+
+.relic-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.relic-slot {
+  text-align: left;
+  font-size: 12px;
+  min-height: 34px;
+}
+
+.relic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.relic {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+}
+
+.relic.selected {
+  outline: 2px solid #fff;
+}
+
+.relic-gem {
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+}
+
+.relic-list .placed {
+  opacity: 0.6;
+}

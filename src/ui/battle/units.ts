@@ -43,6 +43,7 @@ export class UnitView {
   private flash = 0;
   private flashColor = 0xffffff;
   private fall = 0;
+  statusTint: number | null = null;
   shownHp = 1;
   pending = 0;
   fade = 0;
@@ -193,7 +194,7 @@ export class UnitView {
     this.knock = Math.max(0, this.knock - dt * 6);
     this.rig.x = -this.knock * 2 * this.look.dir;
     this.flash = Math.max(0, this.flash - dt * 6);
-    const tint = this.flash > 0.35 ? this.flashColor : 0xffffff;
+    const tint = this.flash > 0.35 ? this.flashColor : (this.statusTint ?? 0xffffff);
     this.body.tint = tint;
     this.weapon.tint = tint;
     this.rig.alpha = this.down && !deathClip && this.fade === 0 ? 0.6 : 1;

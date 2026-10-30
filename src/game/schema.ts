@@ -1,123 +1,125 @@
 import { z } from "zod";
+import { CLASS_KEYS, type ClassKey as ClassKeyT } from "./data/classes";
+import { BASE_KEYS, SLOTS, UNIQUE_KEYS, type BaseKey as BaseKeyT, type UniqueKey as UniqueKeyT } from "./data/items";
+import { GEM_KEYS, MATERIAL_KEYS, PARTS, type GemKey, type MaterialKey as MaterialKeyT, type PartKey } from "./data/materials";
+import { RELIC_COLORS, RELIQUARIES } from "./data/relics";
+import { RUNE_KEYS, type RuneKey as RuneKeyT } from "./data/runes";
+import { SKILL_KEYS, type SkillKey as SkillKeyT } from "./data/skills";
+import { STAT_KEYS, type StatKey as StatKeyT } from "./data/stats";
+import { MONSTER_KEYS, PLAGUE_MAX_INTENSITY, STAGE_COUNT } from "./data/world";
 
-export const CLASS_KEYS = ["knight", "ranger", "mage"] as const;
-export const SLOTS = ["weapon", "helmet", "armor", "boots", "ring", "amulet"] as const;
-export const BASE_KEYS = ["sword", "bow", "staff", "helmet", "armor", "boots", "ring", "amulet"] as const;
-export const STAT_KEYS = [
-  "hp",
-  "atk",
-  "armor",
-  "regen",
-  "hpPct",
-  "atkPct",
-  "atkSpeed",
-  "critChance",
-  "critDamage",
-] as const;
-export const CHEST_KINDS = ["common", "boss", "act"] as const;
-export const RUNE_KEYS = [
-  "might",
-  "vigor",
-  "bulwark",
-  "precision",
-  "ferocity",
-  "greed",
-  "wisdom",
-  "fortune",
-  "treasure",
-  "haste",
-  "satchel",
-  "fellowship1",
-  "fellowship2",
-  "mainspring",
-  "repose",
-  "longRepose",
-  "brevity",
-] as const;
-export const MONSTER_KEYS = [
-  "goblin",
-  "mushroom",
-  "snake",
-  "wolf",
-  "bat",
-  "orc",
-  "troll",
-  "skeleton",
-  "zombie",
-  "scorpion",
-  "cobra",
-  "mummy",
-  "reaper",
-  "vampire",
-  "yeti",
-  "frost",
-  "flame",
-  "imp",
-  "skull",
-  "demon",
-  "dragon",
-] as const;
+const enumOf = <T extends string>(keys: readonly T[]) => z.enum(keys as [T, ...T[]]);
 
 export const ClassKey = z.enum(CLASS_KEYS);
 export const Slot = z.enum(SLOTS);
-export const BaseKey = z.enum(BASE_KEYS);
-export const StatKey = z.enum(STAT_KEYS);
-export const ChestKind = z.enum(CHEST_KINDS);
-export const RuneKey = z.enum(RUNE_KEYS);
+export const BaseKey = enumOf<BaseKeyT>(BASE_KEYS);
+export const StatKey = enumOf<StatKeyT>(STAT_KEYS);
+export const SkillKey = enumOf<SkillKeyT>(SKILL_KEYS);
+export const RuneKey = enumOf<RuneKeyT>(RUNE_KEYS);
+export const UniqueKey = enumOf<UniqueKeyT>(UNIQUE_KEYS);
+export const MaterialKey = enumOf<MaterialKeyT>(MATERIAL_KEYS);
+export const GemKeySchema = enumOf<GemKey>(GEM_KEYS);
+export const PartKeySchema = enumOf<PartKey>(Object.keys(PARTS) as PartKey[]);
+export const ChestKind = z.enum(["common", "boss", "act"]);
 export const MonsterKey = z.enum(MONSTER_KEYS);
 export const ItemId = z.number().int().nonnegative().brand<"ItemId">();
+export const RelicId = z.number().int().nonnegative().brand<"RelicId">();
 
 export const Affix = z.object({ stat: StatKey, value: z.number() });
+
+export const Sockets = z.object({
+  decoration: z.array(GemKeySchema.nullable()),
+  engraving: z.array(PartKeySchema.nullable()),
+  inscription: z.array(Affix.nullable()),
+});
 
 export const Item = z.object({
   id: ItemId,
   base: BaseKey,
-  grade: z.number().int().min(0),
+  grade: z.number().int().min(0).max(9),
   level: z.number().int().min(1),
   affixes: z.array(Affix),
+  unique: UniqueKey.nullable(),
+  sockets: Sockets,
   locked: z.boolean(),
 });
 
 export const Hero = z.object({
+  unlocked: z.boolean(),
   level: z.number().int().min(1),
   xp: z.number().nonnegative(),
   equipment: z.partialRecord(Slot, ItemId),
+  skills: z.partialRecord(SkillKey, z.number().int().min(1)),
+  slotted: z.array(SkillKey),
 });
 
-export const Chest = z.object({ kind: ChestKind, level: z.number().int().min(1) });
+export const Chest = z.object({ kind: ChestKind, level: z.number().int().min(1), cap: z.number().int().min(0).max(9), difficulty: z.number().int().min(0).max(4), plague: z.boolean() });
+
+const StageIndex = z.number().int().min(0).max(STAGE_COUNT - 1);
+const Intensity = z.number().int().min(1).max(PLAGUE_MAX_INTENSITY);
+
+export const Location = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("stage"), index: StageIndex }),
+  z.object({ kind: z.literal("plague"), intensity: Intensity, boss: z.boolean() }),
+]);
+
+export const Relic = z.object({
+  id: RelicId,
+  color: z.enum(RELIC_COLORS),
+  grade: z.number().int().min(0).max(9),
+  stats: z.array(Affix),
+  attunements: z.number().int().min(0),
+});
 
 export const Save = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   savedAt: z.number(),
   rng: z.number().int(),
   time: z.number(),
   gold: z.number().nonnegative(),
   items: z.record(z.string(), Item),
   inventory: z.array(ItemId),
+  stash: z.array(ItemId),
   nextItemId: z.number().int().nonnegative(),
+  materials: z.partialRecord(MaterialKey, z.number().int().min(0)),
   heroes: z.record(ClassKey, Hero),
   party: z.array(ClassKey).min(1),
+  deployReadyAt: z.number(),
   runes: z.partialRecord(RuneKey, z.number().int().min(1)),
   kills: z.partialRecord(MonsterKey, z.number().int().min(0)),
   chests: z.array(Chest),
   chestReadyAt: z.object({ common: z.number(), boss: z.number(), act: z.number() }),
   autoOpenAt: z.number(),
-  unlockedStage: z.number().int().min(0),
-  stage: z.number().int().min(0),
+  unlockedStage: StageIndex,
+  location: Location,
+  lastStage: StageIndex,
   autoAdvance: z.boolean(),
+  cube: z.object({ level: z.number().int().min(1), xp: z.number().min(0) }),
+  plague: z.object({ contamination: z.number().min(0), best: z.number().int().min(0).max(PLAGUE_MAX_INTENSITY), intensity: Intensity }),
+  relics: z.record(z.string(), Relic),
+  reliquary: z.array(z.array(RelicId.nullable()).length(3)).length(RELIQUARIES.length),
   rates: z.object({ gold: z.number(), xp: z.number(), windowGold: z.number(), windowXp: z.number(), windowStart: z.number() }),
 });
 
-export type ClassKey = z.infer<typeof ClassKey>;
+export type ClassKey = ClassKeyT;
 export type Slot = z.infer<typeof Slot>;
-export type BaseKey = z.infer<typeof BaseKey>;
-export type StatKey = z.infer<typeof StatKey>;
+export type BaseKey = BaseKeyT;
+export type StatKey = StatKeyT;
+export type SkillKey = SkillKeyT;
+export type RuneKey = RuneKeyT;
+export type UniqueKey = UniqueKeyT;
+export type MaterialKey = MaterialKeyT;
 export type ChestKind = z.infer<typeof ChestKind>;
-export type RuneKey = z.infer<typeof RuneKey>;
 export type MonsterKey = z.infer<typeof MonsterKey>;
 export type ItemId = z.infer<typeof ItemId>;
+export type RelicId = z.infer<typeof RelicId>;
 export type Affix = z.infer<typeof Affix>;
+export type Sockets = z.infer<typeof Sockets>;
 export type Item = z.infer<typeof Item>;
 export type Hero = z.infer<typeof Hero>;
 export type Chest = z.infer<typeof Chest>;
+export type Relic = z.infer<typeof Relic>;
+export type Location = z.infer<typeof Location>;
 export type Save = z.infer<typeof Save>;
+
+export { CLASS_KEYS, SLOTS, BASE_KEYS, RUNE_KEYS, SKILL_KEYS, MONSTER_KEYS, MATERIAL_KEYS };

@@ -11,11 +11,23 @@ npm run balance   # simulate a player, print time-to-milestone
 
 ## Playing
 
-- **Battle strip.** Heroes walk right, fight a wave, walk on. Each stage has 4–8 waves and ends with a stage boss; every tenth stage is an act boss.
+- **Battle strip.** Heroes walk right, fight a wave, walk on. Each stage has 4–8 waves and ends with a stage boss; every tenth stage is an act boss. 3 acts × 10 stages × 4 difficulties. Nightmare, Hell and Torment lower every resistance by 20, 40 and 60 points.
 - **Pop out.** In Chrome or Edge 116+, the Pop out button moves the battle into an always-on-top Picture-in-Picture window. The menus stay in the tab. Close the window to bring the strip back.
-- **Chests** drop on a timer, not per kill: a common chest can drop at most every 45 s, a boss chest every 90 s, an act chest every 10 min. Open them from the Bag tab, the header, or by clicking the chest icon on the strip.
-- **Cube.** Synthesis turns 9 items of one grade into 1 item of a higher grade (sometimes two grades higher; from Legendary up it can fail and stay). Alchemy turns items into gold.
-- **Runes** are permanent upgrades bought with gold. Fellowship adds party slots, Repose turns on offline rewards, Mainspring auto-opens chests.
+- **Heroes.** Six classes: Knight (tank), Ranger (bow), Sorcerer (elemental area damage), Priest (heals, blessings, resurrection), Hunter (crossbow and traps) and Slayer (melee with life leech). The Knight is free; recruit the rest with gold. Up to three fight at once; the front hero takes the hits. Swapping a new hero in has a one-minute deploy cooldown.
+- **Combat.** Hits can be dodged (no damage) or blocked (half damage). Physical damage is reduced by armor, elemental and chaos damage by resistances, then damage reduction and flat absorb apply. Hits can stun, freeze, chill, ignite, shock, poison or bleed.
+- **Skills.** One point per level. Each class has 6 active skills and 16 passives in 8 tiers; a tier opens after 10 more points are spent. Actives fire on their own, every N attacks or on a cooldown, but only from the active slots (one to start, more from Awakening runes). Resetting is free.
+- **Gear.** Ten slots: weapon, class off-hand, helm, armor, gloves, boots, amulet, earring, ring and bracer. Ten grades from Common to Cosmic; higher grades have more random stats, more sockets and, from Arcana, a chance to be a unique item with a special effect.
+- **Chests** drop on a timer, not per kill: a common chest at most every 45 s, a boss chest every 90 s, an act chest every 10 min. Act bosses only leave a chest if you carry a Soulstone of that difficulty. Chests also hold gems, scrolls, Soulstones and Arcane Dust; monsters drop parts for engravings.
+- **Cube** (opens when a hero reaches level 4; using it levels it up and unlocks more):
+  - Synthesis: 9 items of one grade become 1 of a higher grade at a level you choose. From Immortal up it can fail and stay.
+  - Alchemy: items become gold and Arcane Dust.
+  - Craft: spend dust and gold on an item of a chosen type from a tier's odds table.
+  - Sockets: gems in decoration sockets, monster parts in engravings, scrolls write a random inscription. Removal costs gold and destroys the material.
+  - Offering: reroll a Legendary-or-better item's random stats.
+  - Corrosion: turn items into Plaguelands contamination.
+- **Runes.** A tree of 51 runes in six branches (Heroes, Wisdom, Gold, Storage, Treasure, Combat): party and skill slots, offline hours, chest auto-opening, bag and stash space, and stat bonuses. Resetting refunds everything.
+- **Plaguelands.** Opens after Nightmare 1-10. Entering costs contamination, which drains while you fight there and refills elsewhere. Each intensity is harder and drops better loot, including relics; from intensity 6 a Contaminated Soulstone summons a contaminated boss.
+- **Relics** come from the Plaguelands and sit in three reliquaries for party-wide stats, ×1.5 in a slot of their own color. Attunement rerolls a relic for rising gold.
 - **Pets** unlock after enough kills of one monster type and give a party-wide bonus.
 - **Offline.** With Repose, closing the tab still earns gold and XP at your recent online rate for up to 2 h, or 8 h with Long Repose. No chests drop offline. A hidden tab is still online: the game catches up when it gets CPU time again.
 
@@ -40,24 +52,27 @@ scripts/    balance simulation
 ```
 
 - `src/game/combat.ts` steps the simulation in fixed 100 ms ticks with a seeded RNG, so runs are reproducible and testable. `game.ts#advance` converts wall-clock time into ticks; gaps over 10 minutes become offline rewards instead.
-- `src/game/schema.ts` is the save format (zod). Types are inferred from it, and saves are parsed at load, so a corrupt save starts a new game instead of crashing.
-- `src/game/data/` holds every table a designer would tune: classes, grades and drop weights, item bases and affixes, monsters and acts, runes, pets. Growth rates and timers live in `src/game/tuning.ts`.
+- `src/game/schema.ts` is the save format (zod). Types are inferred from it, and saves are parsed at load, so a corrupt save starts a new game instead of crashing. `migrate.ts` upgrades version 1 saves: heroes, items and progress carry over and rune gold is refunded.
+- `src/game/data/` holds every table a designer would tune: stats and damage types, classes, skill trees, grades and drop weights, item bases, affixes and uniques, materials, monsters, acts and the Plaguelands, runes, pets and relics. Growth rates, timers and Cube unlock levels live in `src/game/tuning.ts`.
+- `combat.ts` runs a battle tick: hero turns pick a slotted skill or a basic attack, monsters pick a target (taunts first), hits resolve dodge → block → armor or resistance → reduction → absorb, and statuses, buffs and traps tick down. `cube.ts`, `actions.ts` and `loot.ts` hold every player action, each a pure function that returns a result instead of throwing.
 - `src/ui/battle/` draws the strip with PixiJS 8 in a 56-pixel-tall world scaled up by a whole number, so pixels stay crisp. Units play idle, walk, attack, hurt and death; hits land on the attack's impact frame with slash, spark and explosion effects, knockback, hit-stop and sound. It renders on whichever window hosts it, so the battle keeps animating in the pop-out window while the main tab is hidden.
 
 ## Balancing
 
-`npm run balance -- <hours> <seed>` plays the game with a bot that opens chests, equips upgrades, synthesizes, sells junk and buys the cheapest rune every 15 simulated seconds. It prints when each act was first cleared. Current tuning, two seeds:
+`npm run balance -- <hours> <seed>` plays the game with a bot that opens chests, equips upgrades, synthesizes and sells junk every 15 simulated seconds. It prints when each act was first cleared. Current tuning, two seeds:
 
 | Milestone | Seed 7 | Seed 31 |
 |---|---|---|
-| Normal cleared | 0.6 h | 0.6 h |
-| Nightmare cleared | 1.5 h | 1.7 h |
-| Hell cleared | 3.1 h | 3.5 h |
-| Torment cleared | 38 h | 28 h |
+| Normal cleared | 1.9 h | 2.0 h |
+| Nightmare cleared | 3.8 h | 4.0 h |
+| Hell cleared | 6.8 h | 7.1 h |
+| Torment cleared | 26 h | 17 h |
+
+The bot recruits heroes, spends skill points, fills sockets and buys runes, but doesn't use the Plaguelands, crafting or relics.
 
 Add `--save path.json` to the balance command to write the bot's save. Paste it into `localStorage["tray-heroes/save"]` to jump to that point in the game.
 
-To test with everything unlocked, open `/?sandbox` while running `npm run dev`. It starts a new game with all three heroes in the party, 10B gold and 18 chests.
+To test with everything unlocked, open `/?sandbox` while running `npm run dev`. It starts a new game with all six heroes at level 30, 10B gold, chests, materials, relics, a level 25 Cube and the Plaguelands open.
 
 ## Credits
 
