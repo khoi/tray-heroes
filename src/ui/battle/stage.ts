@@ -66,14 +66,28 @@ function groundHeight(x: number, z: number, crypt: boolean): number {
   return lane * (noise(x * 0.35, z * 0.35, 3) * 0.25 + behind * (noise(x * 0.12, z * 0.2, 7) * 3.2 + 0.4));
 }
 
-interface Scroller {
-  obj: Object3D;
+interface Placed {
   x: number;
   width: number;
   span: number;
   z: number;
+}
+
+interface Scroller extends Placed {
+  obj: Object3D;
   light?: number;
   regenerate?: (x: number) => void;
+  dispose?: () => void;
+}
+
+const MARGIN = 24;
+const RETRY_MS = 5000;
+
+export function recycle(item: Placed, travelled: number, viewWidth: number): boolean {
+  const depth = (CAMERA_D - item.z) / CAMERA_D;
+  if (item.x - travelled >= -(viewWidth / 2) * depth - item.width - 6) return false;
+  item.x += item.span;
+  return true;
 }
 
 export class Stage {
@@ -91,6 +105,8 @@ export class Stage {
   private sky = new CanvasTexture(document.createElement("canvas"));
   private shake = new Vector3();
   private loading = 0;
+  private travelled = 0;
+  private built = 0;
   private readonly groundMaterial = new MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95 });
   private readonly hillMaterial = new MeshBasicMaterial({ vertexColors: true });
 
@@ -138,6 +154,7 @@ export class Stage {
     this.camera.updateProjectionMatrix();
     this.width = VIEW_H * (w / h);
     this.placeCamera();
+    if (this.theme && this.width + MARGIN > this.built) this.rebuild(this.theme);
   }
 
   private placeCamera(): void {
@@ -177,43 +194,64 @@ export class Stage {
     this.hemi.color.set(look.ambient);
     this.hemi.groundColor.set(look.ambientGround);
     this.hemi.intensity = look.ambientIntensity;
-    void this.build(theme);
+    this.rebuild(theme);
+  }
+
+  private rebuild(theme: Theme): void {
+    this.build(theme).catch((error: unknown) => {
+      console.warn(`Scenery for ${theme} failed to load`, error);
+      setTimeout(() => {
+        if (this.theme === theme) this.theme = null;
+      }, RETRY_MS);
+    });
   }
 
   private async build(theme: Theme): Promise<void> {
     const token = ++this.loading;
     const look = this.look;
-    const span = this.width + 24;
+    const span = this.width + MARGIN;
+    this.built = span;
+    const start = this.travelled - span / 2;
     const next: Scroller[] = [];
-    const ground = Math.ceil(span / CHUNK_W) + 1;
-    for (let i = 0; i < ground; i++) next.push(this.groundChunk(-span / 2 + i * CHUNK_W, ground * CHUNK_W, look, theme === "crypt"));
-    if (theme !== "crypt") {
-      const hillSpan = span * ((CAMERA_D - HILL_Z) / CAMERA_D) + HILL_W * 2;
-      const hills = Math.ceil(hillSpan / HILL_W) + 1;
-      for (let i = 0; i < hills; i++) next.push(this.hill(-hillSpan / 2 + i * HILL_W, hills * HILL_W, look));
-    }
-    if (look.wall) {
-      const wall = await instantiate(look.wall, { shadows: false });
-      const w = wall.size.x;
-      const count = Math.ceil(span / w) + 1;
-      for (let i = 0; i < count; i++) {
-        const obj = i === 0 ? wall.root : wall.root.clone();
-        obj.position.z = -3.9;
-        next.push({ obj, x: -span / 2 + i * w, width: w, span: count * w, z: -3.9 });
+    try {
+      const ground = Math.ceil(span / CHUNK_W) + 1;
+      for (let i = 0; i < ground; i++) next.push(this.groundChunk(start + i * CHUNK_W, ground * CHUNK_W, look, theme === "crypt"));
+      if (theme !== "crypt") {
+        const hillSpan = span * ((CAMERA_D - HILL_Z) / CAMERA_D) + HILL_W * 2;
+        const hills = Math.ceil(hillSpan / HILL_W) + 1;
+        for (let i = 0; i < hills; i++) next.push(this.hill(this.travelled - hillSpan / 2 + i * HILL_W, hills * HILL_W, look));
       }
+      if (look.wall) {
+        const wall = await instantiate(look.wall, { shadows: false });
+        const w = wall.size.x;
+        const count = Math.ceil(span / w) + 1;
+        for (let i = 0; i < count; i++) {
+          const obj = i === 0 ? wall.root : wall.root.clone();
+          obj.position.z = -3.9;
+          next.push({ obj, x: start + i * w, width: w, span: count * w, z: -3.9 });
+        }
+      }
+      next.push(...(await this.scatter(look.scenery, span, theme === "crypt")));
+    } catch (error) {
+      for (const s of next) s.dispose?.();
+      throw error;
     }
-    const props = await this.scatter(look.scenery, span);
-    if (token !== this.loading) return;
-    next.push(...props);
-    for (const s of this.scrollers) s.obj.removeFromParent();
+    if (token !== this.loading) {
+      for (const s of next) s.dispose?.();
+      return;
+    }
+    for (const s of this.scrollers) {
+      s.obj.removeFromParent();
+      s.dispose?.();
+    }
     this.scrollers = next;
     for (const s of next) {
-      s.obj.position.x = s.x;
+      s.obj.position.x = s.x - this.travelled;
       this.world.add(s.obj);
     }
   }
 
-  private async scatter(models: SceneryModel[], span: number): Promise<Scroller[]> {
+  private async scatter(models: SceneryModel[], span: number, crypt: boolean): Promise<Scroller[]> {
     const templates = await Promise.all(models.map((m) => instantiate(m)));
     const out: Scroller[] = [];
     const rand = mulberry(this.theme?.length ?? 1);
@@ -223,7 +261,7 @@ export class Stage {
       const total = pool.reduce((n, p) => n + p.m.weight, 0);
       const { z, spacing } = BANDS[band];
       const width = span * ((CAMERA_D - z[0]) / CAMERA_D);
-      for (let x = -width / 2; x < width / 2; x += spacing * (0.6 + rand() * 0.8)) {
+      for (let x = this.travelled - width / 2; x < this.travelled + width / 2; x += spacing * (0.6 + rand() * 0.8)) {
         let pick = rand() * total;
         const choice = pool.find((p) => (pick -= p.m.weight) < 0) ?? pool[0]!;
         const obj = choice.t.root.clone();
@@ -232,12 +270,13 @@ export class Stage {
         obj.rotation.y = (rand() - 0.5) * 1.6;
         const pz = z[0] + rand() * (z[1] - z[0]);
         obj.position.z = pz;
-        obj.position.y = groundHeight(x, pz, this.theme === "crypt") - 0.05;
+        const settle = (wx: number) => (obj.position.y = groundHeight(wx, pz, crypt) - 0.05);
+        settle(x);
         obj.traverse((o) => {
           if (o instanceof Mesh && o.material instanceof MeshBasicMaterial && o.material.name.startsWith("glow")) o.material.vertexColors = false;
           if (o instanceof Mesh && band === "front") o.castShadow = false;
         });
-        out.push({ obj, x, width: spacing, span: width, z: pz, ...(choice.m.light ? { light: choice.m.light } : {}) });
+        out.push({ obj, x, width: spacing, span: width, z: pz, regenerate: settle, ...(choice.m.light ? { light: choice.m.light } : {}) });
       }
     }
     return out;
@@ -251,7 +290,7 @@ export class Stage {
     geometry.setAttribute("color", new BufferAttribute(new Float32Array(tris * 9), 3));
     const mesh = new Mesh(geometry, this.groundMaterial);
     mesh.receiveShadow = true;
-    const scroller: Scroller = { obj: mesh, x: x0, width: CHUNK_W, span, z: 0 };
+    const scroller: Scroller = { obj: mesh, x: x0, width: CHUNK_W, span, z: 0, dispose: () => geometry.dispose() };
     const palette = look.ground.map((c) => new Color(c));
     const lane = new Color(look.lane);
     const cell = CHUNK_W / CHUNK_CELLS;
@@ -304,7 +343,7 @@ export class Stage {
     const colors: number[] = [];
     const base = new Color(look.hills);
     const far = new Color(look.fog);
-    const scroller: Scroller = { obj: new Mesh(geometry, this.hillMaterial), x: x0, width: HILL_W, span, z: HILL_Z };
+    const scroller: Scroller = { obj: new Mesh(geometry, this.hillMaterial), x: x0, width: HILL_W, span, z: HILL_Z, dispose: () => geometry.dispose() };
     scroller.regenerate = (wx: number) => {
       positions.length = 0;
       colors.length = 0;
@@ -332,19 +371,16 @@ export class Stage {
 
   scroll(dx: number): void {
     if (dx === 0) return;
+    this.travelled += dx;
     for (const s of this.scrollers) {
-      s.x -= dx;
-      const depth = (CAMERA_D - s.z) / CAMERA_D;
-      if (s.x < -(this.width / 2) * depth - s.width - 6) {
-        s.x += s.span;
-        s.regenerate?.(s.x);
-      }
-      s.obj.position.x = s.x;
+      if (recycle(s, this.travelled, this.width)) s.regenerate?.(s.x);
+      s.obj.position.x = s.x - this.travelled;
     }
   }
 
   update(): void {
-    const lit = this.scrollers.filter((s) => s.light !== undefined && Math.abs(s.x) < this.width / 2 + 2).sort((a, b) => Math.abs(a.x) - Math.abs(b.x));
+    const shown = (s: Scroller) => Math.abs(s.x - this.travelled);
+    const lit = this.scrollers.filter((s) => s.light !== undefined && shown(s) < this.width / 2 + 2).sort((a, b) => shown(a) - shown(b));
     this.lights.forEach((light, i) => {
       const s = lit[i];
       if (!s) {
@@ -353,7 +389,7 @@ export class Stage {
       }
       light.color.set(s.light!);
       light.intensity = 6 * (0.85 + Math.random() * 0.15);
-      light.position.set(s.x, 1.3, s.z + 0.6);
+      light.position.set(s.x - this.travelled, 1.3, s.z + 0.6);
     });
   }
 

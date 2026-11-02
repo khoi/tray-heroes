@@ -49,7 +49,7 @@ export function portrait(def: UnitModel): Promise<string> {
   let hit = cache.get(key);
   if (!hit) {
     hit = queue.then(() => render(def));
-    queue = hit.catch(() => undefined);
+    queue = hit.catch(() => cache.delete(key));
     cache.set(key, hit);
   }
   return hit;

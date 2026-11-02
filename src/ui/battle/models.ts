@@ -18,7 +18,9 @@ export type WeaponKey = "sword" | "shield" | "longbow" | "spear" | "axe" | "dagg
 
 export type AttackStyle = "melee" | "shoot" | "throw" | "cast";
 
-export type Carry = Partial<Record<string, [number, number, number]>>;
+export const LIMBS = ["Spine", "Neck", "RightArm", "RightForeArm", "LeftArm", "LeftForeArm"] as const;
+export type Limb = (typeof LIMBS)[number];
+export type Carry = Partial<Record<Limb, [number, number, number]>>;
 
 export interface UnitModel extends Source {
   height: number;

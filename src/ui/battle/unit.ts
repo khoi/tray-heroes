@@ -11,17 +11,19 @@ import {
   MeshStandardMaterial,
   Object3D,
   Quaternion,
+  Skeleton,
+  SkinnedMesh,
   Vector3,
 } from "three";
 import { instantiate } from "./assets";
 import { humanoidClips } from "./clips";
-import { WEAPONS, type AttackStyle, type UnitModel, type WeaponKey } from "./models";
+import { LIMBS, WEAPONS, type AttackStyle, type Limb, type UnitModel, type WeaponKey } from "./models";
 
 const TURN = 0.42;
 const SINK_DEPTH = 0.9;
 
 type Dir = readonly [number, number, number];
-type Pose = Partial<Record<string, Dir>>;
+type Pose = Partial<Record<Limb, Dir>>;
 
 interface Key {
   at: number;
@@ -95,12 +97,14 @@ const MOTIONS: Record<AttackStyle | "lunge" | "hurt" | "buff", Motion> = {
   },
 };
 
-const LIMB_ORDER = ["Spine", "Neck", "RightArm", "RightForeArm", "LeftArm", "LeftForeArm"];
-
 const tmpV = new Vector3();
 const tmpV2 = new Vector3();
+const tmpFrom = new Vector3();
+const tmpTo = new Vector3();
 const tmpQ = new Quaternion();
 const tmpQ2 = new Quaternion();
+const tmpParent = new Quaternion();
+const tmpTurn = new Quaternion();
 const tmpM = new Matrix4();
 
 function smooth(t: number): number {
@@ -108,7 +112,7 @@ function smooth(t: number): number {
   return c * c * (3 - 2 * c);
 }
 
-function sample(motion: Motion, t: number, bone: string, out: Vector3): number {
+function sample(motion: Motion, t: number, bone: Limb, out: Vector3): number {
   const keys = motion.keys;
   let i = 0;
   while (i < keys.length - 2 && keys[i + 1]!.at <= t) i++;
@@ -270,8 +274,14 @@ export class Unit {
     this.sinks = sinks;
   }
 
-  vanish(): void {
-    if (this.vanishing < 0) this.vanishing = 0;
+  vanish(): boolean {
+    if (this.vanishing >= 0) return false;
+    this.vanishing = 0;
+    return true;
+  }
+
+  get sinking(): boolean {
+    return this.dying >= 0 && this.sinks;
   }
 
   get finished(): boolean {
@@ -354,7 +364,7 @@ export class Unit {
       this.rotateBone("Head", tmpV.set(1, 0, 0), 0.25 * k);
       return;
     }
-    for (const name of LIMB_ORDER) {
+    for (const name of LIMBS) {
       const bone = this.bones[name];
       if (!bone) continue;
       const w = sample(m, p.t, name, tmpV2);
@@ -363,7 +373,7 @@ export class Unit {
   }
 
   private applyPose(pose: Pose): void {
-    for (const name of LIMB_ORDER) {
+    for (const name of LIMBS) {
       const bone = this.bones[name];
       const dir = pose[name];
       if (bone && dir) this.aim(bone, tmpV2.set(...dir).normalize(), 1);
@@ -377,24 +387,22 @@ export class Unit {
 
   private rotateBone(name: string, axis: Vector3, angle: number): void {
     const bone = this.bones[name];
-    if (!bone?.parent) return;
-    const parent = this.modelQuat(bone.parent, new Quaternion());
-    const r = tmpQ.setFromAxisAngle(axis, angle);
-    bone.quaternion.premultiply(parent.clone().invert().multiply(r).multiply(parent));
-    bone.updateMatrixWorld(true);
+    if (bone) this.turnInModel(bone, tmpTurn.setFromAxisAngle(axis, angle));
   }
 
   private aim(bone: Bone, dir: Vector3, weight: number): void {
     const tip = bone.children.find((c): c is Bone => c instanceof Bone);
-    if (!tip || !bone.parent) return;
+    if (!tip) return;
     const inv = tmpM.copy(this.model.matrixWorld).invert();
-    const from = bone.getWorldPosition(new Vector3()).applyMatrix4(inv);
-    const to = tip.getWorldPosition(new Vector3()).applyMatrix4(inv);
-    const cur = to.sub(from).normalize();
-    const r = new Quaternion().setFromUnitVectors(cur, dir);
-    const blended = new Quaternion().slerp(r, weight);
-    const parent = this.modelQuat(bone.parent, new Quaternion());
-    bone.quaternion.premultiply(parent.clone().invert().multiply(blended).multiply(parent));
+    const from = bone.getWorldPosition(tmpFrom).applyMatrix4(inv);
+    const cur = tip.getWorldPosition(tmpTo).applyMatrix4(inv).sub(from).normalize();
+    this.turnInModel(bone, tmpTurn.setFromUnitVectors(cur, dir).slerp(tmpQ.identity(), 1 - weight));
+  }
+
+  private turnInModel(bone: Bone, turn: Quaternion): void {
+    if (!bone.parent) return;
+    const parent = this.modelQuat(bone.parent, tmpParent);
+    bone.quaternion.premultiply(turn.premultiply(tmpQ.copy(parent).invert()).multiply(parent));
     bone.updateMatrixWorld(true);
   }
 
@@ -402,6 +410,11 @@ export class Unit {
     this.mixer.stopAllAction();
     this.root.removeFromParent();
     for (const mat of this.materials) mat.dispose();
+    const skeletons = new Set<Skeleton>();
+    this.model.traverse((o) => {
+      if (o instanceof SkinnedMesh) skeletons.add(o.skeleton);
+    });
+    for (const skeleton of skeletons) skeleton.dispose();
   }
 }
 

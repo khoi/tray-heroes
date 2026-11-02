@@ -11,7 +11,10 @@ export function loadModel(src: Source): Promise<GLTF> {
   const url = modelFile(src);
   let hit = cache.get(url);
   if (!hit) {
-    hit = loader.loadAsync(url);
+    hit = loader.loadAsync(url).catch((error: unknown) => {
+      cache.delete(url);
+      throw error;
+    });
     cache.set(url, hit);
   }
   return hit;

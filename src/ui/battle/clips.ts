@@ -21,6 +21,7 @@ function raw(name: HumanoidClip): Promise<RawClip> {
       if (!r.ok) throw new Error(`clip ${name}: HTTP ${r.status}`);
       return r.json() as Promise<RawClip>;
     });
+    hit.catch(() => fetched.delete(name));
     fetched.set(name, hit);
   }
   return hit;

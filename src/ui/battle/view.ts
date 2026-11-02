@@ -20,6 +20,7 @@ const RUN_SPEED = 3.4;
 const ENTER_SPEED = 6;
 const HERO_GAP = 1.45;
 const ENGAGE_GAP = 1.6;
+const RETRY_S = 5;
 const TYPE_COLOR: Record<DamageType, number> = { physical: 0xffffff, fire: 0xffa25a, cold: 0x9ee8ff, lightning: 0xfff07a, chaos: 0xc79bff };
 const TYPE_BURST: Record<DamageType, number[]> = {
   physical: [0xffffff, 0xfff2a8, 0xd8d8d8],
@@ -48,6 +49,7 @@ export class BattleView {
   private readonly hud: Hud;
   private readonly units = new Map<number, Unit>();
   private readonly loading = new Set<number>();
+  private readonly failedAt = new Map<number, number>();
   private readonly wanted = new Set<number>();
   private readonly ranks = new Map<number, BossRank>();
   private readonly doomed = new Set<number>();
@@ -153,17 +155,22 @@ export class BattleView {
   }
 
   private spawn(id: number, def: UnitModel, facing: 1 | -1, x: number, rank: BossRank = "none"): void {
-    if (this.units.has(id) || this.loading.has(id)) return;
+    if (this.units.has(id) || this.loading.has(id) || this.clock - (this.failedAt.get(id) ?? -RETRY_S) < RETRY_S) return;
     this.loading.add(id);
     const boosted = rank !== "none" && def.height < 2 ? { ...def, height: def.height * 1.5 } : def;
-    void Unit.create(boosted, facing).then((unit) => {
-      this.loading.delete(id);
-      if (!this.wanted.has(id)) return unit.dispose();
-      unit.root.position.x = x;
-      unit.home = x;
-      this.stage.scene.add(unit.root);
-      this.units.set(id, unit);
-    });
+    Unit.create(boosted, facing)
+      .then((unit) => {
+        if (!this.wanted.has(id)) return unit.dispose();
+        unit.root.position.x = x;
+        unit.home = x;
+        this.stage.scene.add(unit.root);
+        this.units.set(id, unit);
+      })
+      .catch((error: unknown) => {
+        this.failedAt.set(id, this.clock);
+        console.warn(`Model ${def.id} failed to load`, error);
+      })
+      .finally(() => this.loading.delete(id));
   }
 
   private sync(state: GameState): void {
@@ -177,6 +184,7 @@ export class BattleView {
       if (!unit) return;
       unit.home = home;
       unit.root.position.z = (i % 2) * -0.35;
+      if (h.reviveIn > 0 && unit.alive && !this.doomed.has(h.id)) unit.die(false);
       if (h.reviveIn <= 0 && unit.down && unit.pending === 0) {
         unit.revive();
         this.fx.burst(unit.chest(this.tmp), 14, [0xfff2a8, 0xffffff], { glow: true, gravity: -2, life: 0.9 });
@@ -198,13 +206,13 @@ export class BattleView {
       }
       x += r + 0.3;
     });
+    for (const id of this.failedAt.keys()) if (!this.wanted.has(id)) this.failedAt.delete(id);
   }
 
   private vanishOrphans(): void {
     for (const [id, unit] of this.units) {
-      if (this.wanted.has(id) || this.doomed.has(id) || !unit.alive) continue;
-      unit.vanish();
-      this.fx.burst(unit.chest(this.tmp), 8, [0xd9c7a3, 0xffffff], { speed: 2, life: 0.5 });
+      if (this.wanted.has(id) || this.doomed.has(id) || unit.sinking) continue;
+      if (unit.vanish()) this.fx.burst(unit.chest(this.tmp), 8, [0xd9c7a3, 0xffffff], { speed: 2, life: 0.5 });
     }
   }
 
