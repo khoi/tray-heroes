@@ -46,9 +46,9 @@ function icon(sprite: SpriteRef, scale: number): HTMLSpanElement {
   return el;
 }
 
-function div(className: string, parent: HTMLElement, text = false): HTMLDivElement {
+function div(className: string, parent: HTMLElement): HTMLDivElement {
   const el = document.createElement("div");
-  el.className = text ? `${className} bh-text` : className;
+  el.className = className;
   parent.append(el);
   return el;
 }
@@ -79,10 +79,10 @@ export class Hud {
     style.textContent = CSS;
     this.root.append(style);
     this.flashEl = div("bh-flash", this.root);
-    this.stage = div("bh-stage", this.root, true);
+    this.stage = div("bh-stage bh-text", this.root);
     this.waves = div("bh-waves", this.root);
     this.boss = div("bh-boss", this.root);
-    this.bossName = div("bh-boss-name", this.boss, true);
+    this.bossName = div("bh-boss-name bh-text", this.boss);
     div("bh-boss-bar", this.boss).append(this.bossFill);
     const right = div("bh-right", this.root);
     this.chest.type = "button";
@@ -91,9 +91,9 @@ export class Hud {
     this.chest.append(icon({ sheet: "dungeon", index: 89 }, 1.5), this.chestText);
     this.chest.addEventListener("click", onChest);
     right.append(this.chest);
-    this.gold = div("bh-gold", right, true);
+    this.gold = div("bh-gold bh-text", right);
     this.gold.append(icon({ sheet: "custom", name: "coin" }, 1.25), this.goldText);
-    this.banner = div("bh-banner", this.root, true);
+    this.banner = div("bh-banner bh-text", this.root);
   }
 
   get goldAnchor(): { x: number; y: number } {
@@ -164,7 +164,7 @@ export class Hud {
   }
 
   float(text: string, x: number, y: number, size: number, color: string): void {
-    const el = div("bh-float", this.root, true);
+    const el = div("bh-float bh-text", this.root);
     el.textContent = text;
     el.style.left = `${Math.round(x + (Math.random() - 0.5) * 10)}px`;
     el.style.top = `${Math.round(y)}px`;

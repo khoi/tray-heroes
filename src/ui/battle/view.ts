@@ -55,7 +55,7 @@ export class BattleView {
   private readonly stats = new Map<ClassKey, HeroStats>();
   private timeline: Scheduled[] = [];
   private pet: Unit | null = null;
-  private petKey: MonsterKey | null | undefined = undefined;
+  private petKey: MonsterKey | null = null;
   private clock = 0;
   private lastFrame = 0;
   private hitStop = 0;
@@ -73,7 +73,7 @@ export class BattleView {
     this.element.style.cssText = "position:relative;width:100%;height:100%;overflow:hidden";
     this.stage.canvas.style.cssText = "display:block;width:100%;height:100%";
     this.element.append(this.stage.canvas, this.hud.root);
-    this.stage.fx.add(this.fx.root);
+    this.stage.scene.add(this.fx.root);
   }
 
   async init(): Promise<void> {
@@ -161,7 +161,7 @@ export class BattleView {
       if (!this.wanted.has(id)) return unit.dispose();
       unit.root.position.x = x;
       unit.home = x;
-      this.stage.units.add(unit.root);
+      this.stage.scene.add(unit.root);
       this.units.set(id, unit);
     });
   }
@@ -532,7 +532,7 @@ export class BattleView {
         void Unit.create(def, 1).then((unit) => {
           if (this.petKey !== best) return unit.dispose();
           unit.root.position.x = this.heroFront() - 4;
-          this.stage.units.add(unit.root);
+          this.stage.scene.add(unit.root);
           this.pet = unit;
         });
     }

@@ -15,9 +15,10 @@ export function PetsPanel() {
       {PETS.map((pet) => {
         const kills = state.kills[pet.hunt] ?? 0;
         const done = kills >= pet.kills;
+        const model = PET_MODELS[pet.hunt];
         return (
           <div key={pet.name} className={`pet ${done ? "done" : ""}`}>
-            {PET_MODELS[pet.hunt] && <Portrait model={PET_MODELS[pet.hunt]!} size={56} dim={!done} />}
+            {model && <Portrait model={model} size={56} dim={!done} />}
             <div>
               <h4>
                 {pet.name} <span className="muted">{describe(pet.bonus, pet.amount)}</span>

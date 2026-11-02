@@ -3,7 +3,7 @@ import { AnimationClip, Bone, QuaternionKeyframeTrack, VectorKeyframeTrack } fro
 const CDN = "https://polyfork.dev/cdn/";
 const BAKED_HIP = 0.95;
 
-export const HUMANOID_CLIPS = ["Idle", "Walk", "Run", "Chopping wood", "Punch"] as const;
+export const HUMANOID_CLIPS = ["Idle", "Walk", "Run"] as const;
 export type HumanoidClip = (typeof HUMANOID_CLIPS)[number];
 
 interface RawClip {

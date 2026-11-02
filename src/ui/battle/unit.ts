@@ -32,7 +32,6 @@ interface Motion {
   keys: Key[];
   impact: number;
   lunge?: number;
-  bite?: boolean;
 }
 
 const MOTIONS: Record<AttackStyle | "lunge" | "hurt" | "buff", Motion> = {
@@ -84,7 +83,6 @@ const MOTIONS: Record<AttackStyle | "lunge" | "hurt" | "buff", Motion> = {
   lunge: {
     impact: 0.5,
     lunge: 0.55,
-    bite: true,
     keys: [{ at: 0, pose: {} }, { at: 1, pose: {} }],
   },
   hurt: {
@@ -104,7 +102,6 @@ const tmpV2 = new Vector3();
 const tmpQ = new Quaternion();
 const tmpQ2 = new Quaternion();
 const tmpM = new Matrix4();
-const IDENTITY = new Quaternion();
 
 function smooth(t: number): number {
   const c = Math.min(1, Math.max(0, t));
@@ -133,6 +130,12 @@ interface Playing {
   duration: number;
 }
 
+function advance(p: Playing | null, dt: number): Playing | null {
+  if (!p) return null;
+  p.t += dt / p.duration;
+  return p.t >= 1 ? null : p;
+}
+
 export class Unit {
   readonly root = new Group();
   readonly body = new Group();
@@ -142,7 +145,6 @@ export class Unit {
   home = 0;
   pending = 0;
   alive = true;
-  gone = false;
   shown = 1;
   private readonly model: Object3D;
   private readonly mixer: AnimationMixer;
@@ -312,16 +314,10 @@ export class Unit {
     this.body.rotation.x = 0;
     this.body.rotation.z = 0;
 
-    if (this.playing) {
-      this.playing.t += dt / this.playing.duration;
-      if (this.playing.t >= 1) this.playing = null;
-    }
-    if (this.hurting) {
-      this.hurting.t += dt / this.hurting.duration;
-      if (this.hurting.t >= 1) this.hurting = null;
-    }
+    this.playing = advance(this.playing, dt);
+    this.hurting = advance(this.hurting, dt);
     this.model.updateMatrixWorld(true);
-    if (this.def.carry && this.alive) this.applyPose(this.def.carry, 1);
+    if (this.def.carry && this.alive) this.applyPose(this.def.carry);
     if (this.playing) this.applyMotion(this.playing);
     if (this.hurting && this.alive) this.applyMotion(this.hurting);
 
@@ -354,7 +350,7 @@ export class Unit {
       const reach = Math.pow(k, 1.6) * m.lunge;
       this.body.position.x += this.facing * reach;
       this.body.rotation.z = -this.facing * 0.18 * k;
-      if (m.bite) this.rotateBone("Jaw", tmpV.set(1, 0, 0), 0.5 * k);
+      this.rotateBone("Jaw", tmpV.set(1, 0, 0), 0.5 * k);
       this.rotateBone("Head", tmpV.set(1, 0, 0), 0.25 * k);
       return;
     }
@@ -366,11 +362,11 @@ export class Unit {
     }
   }
 
-  private applyPose(pose: Pose, weight: number): void {
+  private applyPose(pose: Pose): void {
     for (const name of LIMB_ORDER) {
       const bone = this.bones[name];
       const dir = pose[name];
-      if (bone && dir) this.aim(bone, tmpV2.set(...dir).normalize(), weight);
+      if (bone && dir) this.aim(bone, tmpV2.set(...dir).normalize(), 1);
     }
   }
 
@@ -396,7 +392,7 @@ export class Unit {
     const to = tip.getWorldPosition(new Vector3()).applyMatrix4(inv);
     const cur = to.sub(from).normalize();
     const r = new Quaternion().setFromUnitVectors(cur, dir);
-    const blended = IDENTITY.clone().slerp(r, weight);
+    const blended = new Quaternion().slerp(r, weight);
     const parent = this.modelQuat(bone.parent, new Quaternion());
     bone.quaternion.premultiply(parent.clone().invert().multiply(blended).multiply(parent));
     bone.updateMatrixWorld(true);

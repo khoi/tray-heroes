@@ -80,8 +80,6 @@ export class Stage {
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(10, 6, 1, 200);
-  readonly units = new Group();
-  readonly fx = new Group();
   theme: Theme | null = null;
   width = 30;
   private look: Look = LOOKS.forest;
@@ -115,7 +113,7 @@ export class Stage {
       this.lights.push(light);
       this.scene.add(light);
     }
-    this.scene.add(this.sun, this.sun.target, this.hemi, this.world, this.units, this.fx);
+    this.scene.add(this.sun, this.sun.target, this.hemi, this.world);
     this.scene.background = this.sky;
     this.scene.fog = new Fog(0xffffff, CAMERA_D + 8, CAMERA_D + 70);
   }
