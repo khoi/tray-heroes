@@ -1,4 +1,3 @@
-import type { SpriteRef } from "../types";
 import type { PartKey } from "./materials";
 import type { DamageType, StatusKind } from "./stats";
 
@@ -29,7 +28,6 @@ export type MonsterKey = (typeof MONSTER_KEYS)[number];
 
 export interface MonsterDef {
   name: string;
-  sprite: SpriteRef;
   hp: number;
   dmg: number;
   interval: number;
@@ -39,10 +37,8 @@ export interface MonsterDef {
   ranged: boolean;
 }
 
-const c = (index: number): SpriteRef => ({ sheet: "creatures", index });
-const m = (name: string, sprite: SpriteRef, hp: number, dmg: number, interval: number, type: DamageType, status: StatusKind | null, part: PartKey, ranged = false): MonsterDef => ({
+const m = (name: string, hp: number, dmg: number, interval: number, type: DamageType, status: StatusKind | null, part: PartKey, ranged = false): MonsterDef => ({
   name,
-  sprite,
   hp,
   dmg,
   interval,
@@ -53,30 +49,30 @@ const m = (name: string, sprite: SpriteRef, hp: number, dmg: number, interval: n
 });
 
 export const MONSTERS: Record<MonsterKey, MonsterDef> = {
-  goblin: m("Goblin", c(10), 1, 1, 1.4, "physical", null, "wildFang"),
-  mushroom: m("Bog Slime", c(13), 1.3, 0.7, 1.6, "chaos", "poison", "bogGel"),
-  snake: m("Slugling", c(40), 0.8, 1.2, 1.2, "chaos", "poison", "bogGel"),
-  wolf: m("Orc Warrior", c(23), 1.1, 1.1, 1.1, "physical", "bleed", "wildFang"),
-  bat: m("Bat", { sheet: "dungeon", index: 120 }, 0.7, 0.9, 0.9, "physical", null, "wildFang"),
-  orc: m("Masked Orc", c(11), 1.2, 1.2, 1.5, "physical", "stun", "titanHeart"),
-  troll: m("Ogre Chief", c(42), 1.3, 1.1, 1.8, "physical", "stun", "titanHeart"),
-  skeleton: m("Skeleton", c(1), 0.9, 1.1, 1.3, "physical", null, "boneShard"),
-  zombie: m("Zombie", c(0), 1.4, 0.9, 1.7, "chaos", "poison", "graveDust"),
-  scorpion: m("Mud Golem", c(145), 1, 1.2, 1.2, "physical", null, "boneShard", true),
-  cobra: m("Sand Slug", c(41), 0.8, 1.3, 1.1, "chaos", "poison", "graveDust"),
-  mummy: m("Ghoul", c(95), 1.2, 1, 1.4, "physical", "bleed", "graveDust"),
-  reaper: m("Necromancer", c(4), 1.1, 1.3, 1.4, "chaos", null, "graveDust", true),
-  vampire: m("Plague Giant", c(2), 1.3, 1.2, 1.5, "chaos", "poison", "titanHeart"),
-  yeti: m("Frost Ghoul", c(43), 1.4, 1, 1.6, "cold", "chill", "frostCore"),
-  frost: m("Fallen Angel", c(49), 0.9, 1.2, 1.2, "lightning", "shock", "stormGland"),
-  flame: m("Chort", c(45), 0.9, 1.3, 1.2, "fire", "ignite", "demonHorn"),
-  imp: m("Imp", c(39), 0.8, 1.1, 0.9, "fire", "ignite", "demonHorn"),
-  skull: m("Wogol", c(3), 1, 1.2, 1.3, "lightning", "shock", "stormGland"),
-  demon: m("Orc Shaman", c(38), 1.2, 1.3, 1.5, "fire", "ignite", "demonHorn"),
-  dragon: m("Pit Lord", c(33), 1.4, 1.3, 1.6, "fire", "ignite", "titanHeart"),
+  goblin: m("Goblin", 1, 1, 1.4, "physical", null, "wildFang"),
+  mushroom: m("Bog Slug", 1.3, 0.7, 1.6, "chaos", "poison", "bogGel"),
+  snake: m("Marsh Toad", 0.8, 1.2, 1.2, "chaos", "poison", "bogGel"),
+  wolf: m("Grey Wolf", 1.1, 1.1, 1.1, "physical", "bleed", "wildFang"),
+  bat: m("Carrion Crow", 0.7, 0.9, 0.9, "physical", null, "wildFang"),
+  orc: m("Orc Brute", 1.2, 1.2, 1.5, "physical", "stun", "titanHeart"),
+  troll: m("Elder Bear", 1.3, 1.1, 1.8, "physical", "stun", "titanHeart"),
+  skeleton: m("Bone Duelist", 0.9, 1.1, 1.3, "physical", null, "boneShard"),
+  zombie: m("Zombie", 1.4, 0.9, 1.7, "chaos", "poison", "graveDust"),
+  scorpion: m("Bone Archer", 1, 1.2, 1.2, "physical", null, "boneShard", true),
+  cobra: m("Plague Rat", 0.8, 1.3, 1.1, "chaos", "poison", "graveDust"),
+  mummy: m("Ghoul", 1.2, 1, 1.4, "physical", "bleed", "graveDust"),
+  reaper: m("Necromancer", 1.1, 1.3, 1.4, "chaos", null, "graveDust", true),
+  vampire: m("Brood Mother", 1.3, 1.2, 1.5, "chaos", "poison", "titanHeart"),
+  yeti: m("Frost Mantis", 1.4, 1, 1.6, "cold", "chill", "frostCore"),
+  frost: m("Storm Wasp", 0.9, 1.2, 1.2, "lightning", "shock", "stormGland"),
+  flame: m("Ember Raptor", 0.9, 1.3, 1.2, "fire", "ignite", "demonHorn"),
+  imp: m("Cinder Beetle", 0.8, 1.1, 0.9, "fire", "ignite", "demonHorn"),
+  skull: m("Thunder Millipede", 1, 1.2, 1.3, "lightning", "shock", "stormGland"),
+  demon: m("Flame Warlord", 1.2, 1.3, 1.5, "fire", "ignite", "demonHorn"),
+  dragon: m("Ember Tyrant", 1.4, 1.3, 1.6, "fire", "ignite", "titanHeart"),
 };
 
-export type Theme = "forest" | "desert" | "ember" | "plague";
+export type Theme = "forest" | "crypt" | "lair" | "plague";
 
 export interface ActDef {
   name: string;
@@ -88,8 +84,8 @@ export interface ActDef {
 
 export const ACTS: readonly ActDef[] = [
   { name: "Greenwood", theme: "forest", pool: ["goblin", "mushroom", "snake", "wolf", "bat"], stageBoss: "orc", actBoss: "troll" },
-  { name: "Dune Tombs", theme: "desert", pool: ["skeleton", "zombie", "scorpion", "cobra", "mummy"], stageBoss: "reaper", actBoss: "vampire" },
-  { name: "Ember Peaks", theme: "ember", pool: ["yeti", "frost", "flame", "imp", "skull"], stageBoss: "demon", actBoss: "dragon" },
+  { name: "Sunken Crypt", theme: "crypt", pool: ["skeleton", "zombie", "scorpion", "cobra", "mummy"], stageBoss: "reaper", actBoss: "vampire" },
+  { name: "Dragon's Lair", theme: "lair", pool: ["yeti", "frost", "flame", "imp", "skull"], stageBoss: "demon", actBoss: "dragon" },
 ];
 
 export const DIFFICULTIES = ["Normal", "Nightmare", "Hell", "Torment"] as const;

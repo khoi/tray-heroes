@@ -115,7 +115,7 @@ class Audio {
   getPrefs = (): Prefs => this.prefs;
 
   private syncMusic(): void {
-    const track = this.theme === "plague" ? "ember" : this.theme;
+    const track = this.theme === "plague" ? "lair" : this.theme;
     const wanted = this.prefs.music && this.ctx && track ? `/sfx/music-${track}.m4a` : null;
     if (this.music && (!wanted || !this.music.src.endsWith(wanted))) {
       this.music.pause();

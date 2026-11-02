@@ -4,7 +4,7 @@ import type { ChestKind, ClassKey, ItemId, MonsterKey, Save } from "./schema";
 import type { Location } from "./data/world";
 
 export type SpriteRef =
-  | { sheet: "dungeon" | "town" | "creatures"; index: number }
+  | { sheet: "dungeon" | "town"; index: number }
   | { sheet: "custom"; name: CustomSprite };
 
 export type CustomSprite = "helmet" | "armor" | "boots" | "amulet" | "coin";

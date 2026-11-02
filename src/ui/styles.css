@@ -401,20 +401,13 @@ button.link {
 .portrait {
   display: inline-block;
   flex: none;
-  image-rendering: pixelated;
+  background-size: contain;
   background-repeat: no-repeat;
-  animation-name: portrait-idle;
-  animation-timing-function: steps(var(--frames));
-  animation-iteration-count: infinite;
+  background-position: center;
 }
 
-@keyframes portrait-idle {
-  from {
-    background-position-x: 0;
-  }
-  to {
-    background-position-x: var(--end);
-  }
+.portrait.silhouette {
+  filter: brightness(0) opacity(0.5);
 }
 
 /* Shared controls */

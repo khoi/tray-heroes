@@ -3,7 +3,8 @@ import { MONSTERS } from "../../game/data/world";
 import { describe } from "./Runes";
 import { useGame } from "../engine";
 import { compact } from "../format";
-import { Icon } from "../items";
+import { PET_MODELS } from "../battle/models";
+import { Portrait } from "../Portrait";
 import "./pets.css";
 
 export function PetsPanel() {
@@ -14,9 +15,10 @@ export function PetsPanel() {
       {PETS.map((pet) => {
         const kills = state.kills[pet.hunt] ?? 0;
         const done = kills >= pet.kills;
+        const model = PET_MODELS[pet.hunt];
         return (
           <div key={pet.name} className={`pet ${done ? "done" : ""}`}>
-            <Icon sprite={pet.sprite} scale={3} className={done ? "" : "silhouette"} />
+            {model && <Portrait model={model} size={56} dim={!done} />}
             <div>
               <h4>
                 {pet.name} <span className="muted">{describe(pet.bonus, pet.amount)}</span>

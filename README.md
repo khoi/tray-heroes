@@ -1,6 +1,6 @@
 # Tray Heroes
 
-An idle auto-battler that runs in a thin strip. A party of up to three pixel heroes fights through waves on its own, drops chests, and gets stronger while you do something else. Pop the strip out and it floats above your other windows.
+An idle auto-battler that runs in a thin strip. A party of up to three low-poly heroes fights through waves on its own, drops chests, and gets stronger while you do something else. Pop the strip out and it floats above your other windows.
 
 ```sh
 npm install
@@ -11,7 +11,7 @@ npm run balance   # simulate a player, print time-to-milestone
 
 ## Playing
 
-- **Battle strip.** Heroes walk right, fight a wave, walk on. Each stage has 4–8 waves and ends with a stage boss; every tenth stage is an act boss. 3 acts × 10 stages × 4 difficulties. Nightmare, Hell and Torment lower every resistance by 20, 40 and 60 points.
+- **Battle strip.** A 3D diorama: heroes run right, fight a wave, run on. Each stage has 4–8 waves and ends with a stage boss; every tenth stage is an act boss. 3 acts (Greenwood, Sunken Crypt, Dragon's Lair) × 10 stages × 4 difficulties. Nightmare, Hell and Torment lower every resistance by 20, 40 and 60 points.
 - **Pop out.** In Chrome or Edge 116+, the Pop out button moves the battle into an always-on-top Picture-in-Picture window. The menus stay in the tab. Close the window to bring the strip back.
 - **Heroes.** Six classes: Knight (tank), Ranger (bow), Sorcerer (elemental area damage), Priest (heals, blessings, resurrection), Hunter (crossbow and traps) and Slayer (melee with life leech). The Knight is free; recruit the rest with gold. Up to three fight at once; the front hero takes the hits. Swapping a new hero in has a one-minute deploy cooldown.
 - **Combat.** Hits can be dodged (no damage) or blocked (half damage). Physical damage is reduced by armor, elemental and chaos damage by resistances, then damage reduction and flat absorb apply. Hits can stun, freeze, chill, ignite, shock, poison or bleed.
@@ -35,27 +35,27 @@ Progress saves to `localStorage` every 10 s and when the tab hides.
 
 ## Art and sound
 
-Units, weapons, effects, sounds and music are CC0 and live in `public/`. `npm run import-art` rebuilds them from the source packs, cropping sprite sheets into one atlas per unit and writing a manifest the renderer reads:
+Heroes, monsters, pets, weapons and scenery are low-poly models from [Polyfork](https://polyfork.dev), free for commercial use. `npm run fetch-models` rebuilds `public/models/` from the registry in `src/ui/battle/models.ts`: it downloads each model (baking structural knobs such as the witch's age), moves each prop's night-glow triangles into an unlit material, and compresses the GLB with meshopt. Downloads are cached in `.cache/polyfork/`; pass part of an id to rebuild only matching models.
 
-```sh
-npm run import-art -- --dungeon <0x72_DungeonTilesetII_v1.7> --ninja "<Ninja Adventure - Asset Pack>"
-```
+Humanoids play Polyfork's motion-captured Idle, Walk and Run clips, which load from Polyfork's CDN at runtime because their license keeps the clips there. Attacks, bow draws, casts, hurt and death are poses layered on top: each pose aims a few bones in the character's own space, so one table animates every humanoid. Creatures use the Idle, Walk and Run clips baked into their GLB, plus a lunge.
 
-For hand-animated attack, hurt and death frames, buy Zerie's Tiny RPG Character Asset Packs 01 and 02 and run `npm run import-art -- --zerie <pack 01 dir> <pack 02 dir>`. The result goes to `public/art/licensed/` (git-ignored, the license forbids redistribution) and overrides the CC0 units it covers. Hit frames are detected from the sheets, so attacks land on the right frame without hand tuning.
+`/lab.html` (dev server only) renders units side by side in any pose, for tuning poses and weapon grips: `/lab.html?units=knight,ranger&pose=shoot&t=0.6`.
+
+Sounds and music are CC0; see [CREDITS.md](CREDITS.md).
 
 ## How it is built
 
 ```
 src/game/   pure TypeScript, no DOM: the whole game
-src/ui/     React panels + a PixiJS renderer that only reads game state
-scripts/    balance simulation
+src/ui/     React panels + a three.js renderer that only reads game state
+scripts/    balance simulation, model download
 ```
 
 - `src/game/combat.ts` steps the simulation in fixed 100 ms ticks with a seeded RNG, so runs are reproducible and testable. `game.ts#advance` converts wall-clock time into ticks; gaps over 10 minutes become offline rewards instead.
 - `src/game/schema.ts` is the save format (zod). Types are inferred from it, and saves are parsed at load, so a corrupt save starts a new game instead of crashing. `migrate.ts` upgrades version 1 saves: heroes, items and progress carry over and rune gold is refunded.
 - `src/game/data/` holds every table a designer would tune: stats and damage types, classes, skill trees, grades and drop weights, item bases, affixes and uniques, materials, monsters, acts and the Plaguelands, runes, pets and relics. Growth rates, timers and Cube unlock levels live in `src/game/tuning.ts`.
 - `combat.ts` runs a battle tick: hero turns pick a slotted skill or a basic attack, monsters pick a target (taunts first), hits resolve dodge → block → armor or resistance → reduction → absorb, and statuses, buffs and traps tick down. `cube.ts`, `actions.ts` and `loot.ts` hold every player action, each a pure function that returns a result instead of throwing.
-- `src/ui/battle/` draws the strip with PixiJS 8 in a 56-pixel-tall world scaled up by a whole number, so pixels stay crisp. Units play idle, walk, attack, hurt and death; hits land on the attack's impact frame with slash, spark and explosion effects, knockback, hit-stop and sound. It renders on whichever window hosts it, so the battle keeps animating in the pop-out window while the main tab is hidden.
+- `src/ui/battle/` draws the strip with three.js. `stage.ts` is the world: camera, lights, fog, procedural low-poly ground, distant hills and scenery that recycles as the party runs. `unit.ts` is one hero or monster: model, animation mixer, weapon grips and the pose layer. `fx.ts` holds particles, projectiles, slashes, explosions and lightning, and `hud.ts` the DOM overlay (stage, waves, gold, chests, boss bar, health bars, damage numbers). `view.ts` turns game events into all of it: hits land on the attack's impact moment, with hit-stop, shake and sound. It renders on whichever window hosts it, so the battle keeps animating in the pop-out window while the main tab is hidden. `portraits.ts` renders the same models into the portraits the panels show.
 
 ## Balancing
 
@@ -76,4 +76,4 @@ To test with everything unlocked, open `/?sandbox` while running `npm run dev`. 
 
 ## Credits
 
-Art and audio are CC0 packs by 0x72, pixel-boy & AAA, Kenney and Clint Bellanger; see [CREDITS.md](CREDITS.md).
+3D models by Polyfork; sounds, music and icons are CC0 packs by pixel-boy & AAA and Kenney. See [CREDITS.md](CREDITS.md).
