@@ -9,6 +9,7 @@ import { inventoryCap, modifiers, stashCap } from "../../game/stats";
 import { engine, useGame } from "../engine";
 import { compact } from "../format";
 import { Delta, EmptyTile, Icon, ItemDetails, ItemTile, MaterialChip, compareEquip, eligibleHeroes } from "../items";
+import { HERO_MODELS } from "../battle/models";
 import { Portrait } from "../Portrait";
 import "./bag.css";
 
@@ -108,7 +109,7 @@ export function BagPanel() {
                   const tooLow = state.heroes[cls].level < item.level;
                   return (
                     <div key={cls} className="compare-row">
-                      <Portrait unit={cls} fallback={CLASSES[cls].sprite} scale={1} />
+                      <Portrait model={HERO_MODELS[cls]} size={28} />
                       <Delta value={delta} />
                       <button
                         type="button"

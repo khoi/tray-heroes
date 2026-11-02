@@ -6,7 +6,6 @@ export const TILE = 16;
 export const SHEETS = {
   dungeon: { url: "/assets/dungeon.png", columns: 12, width: 192, height: 176 },
   town: { url: "/assets/town.png", columns: 12, width: 192, height: 176 },
-  creatures: { url: "/assets/creatures.png", columns: 10, width: 160, height: 288 },
 } as const;
 
 export type SheetKey = keyof typeof SHEETS;

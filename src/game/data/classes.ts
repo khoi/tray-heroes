@@ -1,4 +1,3 @@
-import type { SpriteRef } from "../types";
 import type { BaseKey } from "./items";
 import type { DamageType, StatBlock, StatusKind } from "./stats";
 
@@ -8,7 +7,6 @@ export type ClassKey = (typeof CLASS_KEYS)[number];
 export interface ClassDef {
   name: string;
   role: string;
-  sprite: SpriteRef;
   main: BaseKey;
   sub: BaseKey;
   damage: DamageType;
@@ -24,7 +22,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   knight: {
     name: "Knight",
     role: "Tank. Holds the front line with shields and stuns.",
-    sprite: { sheet: "dungeon", index: 97 },
     main: "sword",
     sub: "shield",
     damage: "physical",
@@ -38,7 +35,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   ranger: {
     name: "Ranger",
     role: "Bow damage. Fast shots and frequent crits.",
-    sprite: { sheet: "dungeon", index: 112 },
     main: "bow",
     sub: "quiver",
     damage: "physical",
@@ -52,7 +48,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   mage: {
     name: "Sorcerer",
     role: "Elemental area damage that burns, freezes and shocks.",
-    sprite: { sheet: "dungeon", index: 84 },
     main: "staff",
     sub: "orb",
     damage: "fire",
@@ -66,7 +61,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   priest: {
     name: "Priest",
     role: "Heals, blessings and resurrection.",
-    sprite: { sheet: "dungeon", index: 100 },
     main: "scepter",
     sub: "tome",
     damage: "lightning",
@@ -80,7 +74,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   hunter: {
     name: "Hunter",
     role: "Crossbow and traps that hit whole waves.",
-    sprite: { sheet: "dungeon", index: 87 },
     main: "crossbow",
     sub: "bolts",
     damage: "physical",
@@ -94,7 +87,6 @@ export const CLASSES: Record<ClassKey, ClassDef> = {
   slayer: {
     name: "Slayer",
     role: "Melee burst that heals from every hit.",
-    sprite: { sheet: "dungeon", index: 88 },
     main: "axe",
     sub: "hatchet",
     damage: "physical",

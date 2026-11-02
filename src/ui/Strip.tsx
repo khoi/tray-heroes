@@ -22,6 +22,7 @@ export function openNextChest(): void {
 
 const view = new BattleView(openNextChest);
 const ready = view.init();
+if (import.meta.env.DEV) Object.assign(window, { view });
 let generation = 0;
 
 function runLoop(win: Window, host: HTMLElement): void {
@@ -47,7 +48,7 @@ export function Strip() {
     const el = host.current;
     if (!el) return;
     void ready.then(() => {
-      el.append(view.canvas);
+      el.append(view.element);
       runLoop(window, el);
     });
   }, []);

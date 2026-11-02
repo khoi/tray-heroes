@@ -8,6 +8,7 @@ import { xpToNext } from "../../game/tuning";
 import { engine, useGame } from "../engine";
 import { compact, percent } from "../format";
 import { EmptyTile, ItemTile } from "../items";
+import { HERO_MODELS } from "../battle/models";
 import { Portrait } from "../Portrait";
 import "./heroes.css";
 
@@ -58,7 +59,7 @@ export function HeroesPanel({ selected, onSelect }: { selected: ClassKey; onSele
           const at = state.party.indexOf(cls);
           return (
             <button key={cls} type="button" className={`roster-row ${selected === cls ? "selected" : ""} ${h.unlocked ? "" : "locked"}`} onClick={() => onSelect(cls)}>
-              <Portrait unit={cls} fallback={CLASSES[cls].sprite} scale={2} />
+              <Portrait model={HERO_MODELS[cls]} size={44} />
               <span className="roster-name">
                 {CLASSES[cls].name}
                 <span className="muted">{h.unlocked ? `Lv ${h.level}` : `${compact(CLASSES[cls].unlockCost)} gold`}</span>
@@ -70,7 +71,7 @@ export function HeroesPanel({ selected, onSelect }: { selected: ClassKey; onSele
       </aside>
       <section className="hero-detail">
         <header className="hero-head">
-          <Portrait unit={selected} fallback={def.sprite} scale={4} />
+          <Portrait model={HERO_MODELS[selected]} size={96} />
           <div className="grow">
             <h3>
               {def.name} <span className="muted">{hero.unlocked ? `Lv ${hero.level}` : "Not recruited"}</span>
