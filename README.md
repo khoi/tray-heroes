@@ -2,6 +2,8 @@
 
 An idle auto-battler that runs in a thin strip. A party of up to three low-poly heroes fights through waves on its own, drops chests, and gets stronger while you do something else. Pop the strip out and it floats above your other windows.
 
+Play it at https://khoi.github.io/tray-heroes/. Every push to `main` runs the tests and deploys the build to GitHub Pages (`.github/workflows/pages.yml`); pull requests run the same build without deploying. Runtime assets load through `publicUrl()` in `src/ui/paths.ts` so the game works under the `/tray-heroes/` subpath.
+
 ```sh
 npm install
 npm run dev       # play at the printed URL
