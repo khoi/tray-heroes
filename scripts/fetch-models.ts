@@ -17,7 +17,7 @@ function sourceUrl(src: Source): string {
 }
 
 async function download(src: Source): Promise<Uint8Array> {
-  const cached = join(CACHE, modelFile(src).replace("/models/", ""));
+  const cached = join(CACHE, modelFile(src).replace("models/", ""));
   if (existsSync(cached)) return readFileSync(cached);
   const res = await fetch(sourceUrl(src), { headers: { "User-Agent": USER_AGENT } });
   if (!res.ok) throw new Error(`${src.id}: HTTP ${res.status} ${await res.text()}`);

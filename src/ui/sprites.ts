@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
 import type { CustomSprite, SpriteRef } from "../game/types";
+import { publicUrl } from "./paths";
 
 export const TILE = 16;
 
 export const SHEETS = {
-  dungeon: { url: "/assets/dungeon.png", columns: 12, width: 192, height: 176 },
-  town: { url: "/assets/town.png", columns: 12, width: 192, height: 176 },
+  dungeon: { url: publicUrl("assets/dungeon.png"), columns: 12, width: 192, height: 176 },
+  town: { url: publicUrl("assets/town.png"), columns: 12, width: 192, height: 176 },
 } as const;
 
 export type SheetKey = keyof typeof SHEETS;

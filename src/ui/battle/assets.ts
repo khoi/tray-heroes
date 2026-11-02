@@ -2,6 +2,7 @@ import { AnimationClip, Box3, Mesh, MeshStandardMaterial, Object3D, Vector3 } fr
 import { GLTFLoader, type GLTF } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
+import { publicUrl } from "../paths";
 import { modelFile, type Source } from "./models";
 
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
@@ -11,7 +12,7 @@ export function loadModel(src: Source): Promise<GLTF> {
   const url = modelFile(src);
   let hit = cache.get(url);
   if (!hit) {
-    hit = loader.loadAsync(url).catch((error: unknown) => {
+    hit = loader.loadAsync(publicUrl(url)).catch((error: unknown) => {
       cache.delete(url);
       throw error;
     });

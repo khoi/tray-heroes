@@ -1,4 +1,5 @@
 import type { Theme } from "../../game/data/world";
+import { publicUrl } from "../paths";
 
 export const SOUNDS = [
   "hit1",
@@ -70,7 +71,7 @@ class Audio {
     this.master.connect(this.ctx.destination);
     await Promise.all(
       SOUNDS.map(async (name) => {
-        const res = await fetch(`/sfx/${name}.m4a`);
+        const res = await fetch(publicUrl(`sfx/${name}.m4a`));
         this.buffers.set(name, await this.ctx!.decodeAudioData(await res.arrayBuffer()));
       }),
     );
@@ -116,7 +117,7 @@ class Audio {
 
   private syncMusic(): void {
     const track = this.theme === "plague" ? "lair" : this.theme;
-    const wanted = this.prefs.music && this.ctx && track ? `/sfx/music-${track}.m4a` : null;
+    const wanted = this.prefs.music && this.ctx && track ? publicUrl(`sfx/music-${track}.m4a`) : null;
     if (this.music && (!wanted || !this.music.src.endsWith(wanted))) {
       this.music.pause();
       this.music = null;

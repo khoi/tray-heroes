@@ -232,7 +232,7 @@ function hash(text: string): string {
 }
 
 export function modelFile(source: Source): string {
-  return `/models/${source.p ? `${source.id}-${hash(JSON.stringify(source.p))}` : source.id}.glb`;
+  return `models/${source.p ? `${source.id}-${hash(JSON.stringify(source.p))}` : source.id}.glb`;
 }
 
 export function allSources(): Source[] {
