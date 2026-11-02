@@ -10,6 +10,7 @@ describe("model loading", () => {
     await expect(loadModel({ id: "flaky-model" })).rejects.toThrow("offline");
     await expect(loadModel({ id: "flaky-model" })).resolves.toBe(gltf);
     expect(load).toHaveBeenCalledTimes(2);
+    expect(load).toHaveBeenLastCalledWith(`${import.meta.env.BASE_URL}models/flaky-model.glb`);
     load.mockRestore();
   });
 });

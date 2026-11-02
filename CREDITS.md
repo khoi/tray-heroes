@@ -9,4 +9,4 @@
 | Tiny Town 1.1 (`public/assets/town.png`) | Bow icon | Kenney (kenney.nl) | CC0 1.0 |
 | Pixelify Sans (via `@fontsource/pixelify-sans`) | UI and damage numbers | Stefie Justprince | SIL Open Font License 1.1 |
 
-Polyfork's terms let a game ship their models but forbid redistributing the files as standalone assets. The models here are part of the game; do not reuse `public/models/` outside it.
+Polyfork's terms let a game ship their models but forbid redistributing the files as standalone assets. This repository is public, so the files in `public/models/` can be downloaded from it; they are here only to build this game and must not be reused outside it.
